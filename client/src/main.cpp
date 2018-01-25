@@ -18,15 +18,18 @@
  */
 #define SERIAL_SPEED      9600
 #define MAC_ADDRESS       {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED}
-//#define IP_ADDRESS        {192, 168, 88, 88}
+//#define IP_ADDRESS        {192, 168, 88, 88}    //MY_OWN_IP
 //#define GATEWAY           {192, 168, 88, 1}
 //#define SUBNET            {255, 255, 255, 0}
-#define BLACK             {0, 0, 0}       //Turn LED off
+#define SERVER_IP         {192, 168, 88, 88}
+#define REQUEST_FROM      "192.168.88.88/x.php" //POST REQUEST_FROM
+#define REQUEST_PORT      80                    //Standard HTTP port
+#define BLACK             {0, 0, 0}             //Turn LED off
 #define BLUE              {0, 0, 255}
 #define GREEN             {0, 255, 0}
-#define AQUA              {0, 255, 255}   //Light blue
+#define AQUA              {0, 255, 255}         //Light blue
 #define RED               {255, 0, 0}
-#define FUCHSIA           {255, 0, 255}   //Kinda purple
+#define FUCHSIA           {255, 0, 255}         //Kinda purple
 #define YELLOW            {255, 255, 0}
 #define WHITE             {255, 255, 255}
 #define KEYPAD_LINES      4
@@ -165,6 +168,66 @@ String HashedPassword (String password)
 }
 
 /*
+ *  String GeneratePostData (String rfidTag, byte roomId, byte action, byte status);
+ *
+ *  Description:
+ *  - Generates a JSON format text to send through HTTP post
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] String rfidTag: the RFID Tag read by function above
+ *  [INPUT] byte roomId: the ID of the room where this client is
+ *  [INPUT] byte action: indicates if the person is entering or leaving the room (level 3 security purposes)
+ *  [INPUT] byte status: <<FILL HERE>>
+ *
+ *  Returns:
+ *  [String] A JSON format text contatining the whole input data
+ */
+String GeneratePostData (String rfidTag, byte roomId, byte action, byte status)
+{
+  String aux = "{\n\t\"rfidTag\":\"";
+  aux.concat(rfidTag);
+  aux.concat("\",\n\t\"roomId\":");
+  aux.concat(String(roomId));
+  aux.concat(",\n\t\"action\":");
+  aux.concat(String(action));
+  aux.concat(",\n\t\"status\":");
+  aux.concat(String(status));
+  aux.concat("\n}");
+  return aux;
+}
+
+/*
+ *
+ */
+void SendPostRequest(String rfidTag, byte roomId, byte action, byte status)
+{
+  String output = "";
+  String PostData = GeneratePostData(rfidTag, roomId, action, status);
+  IPAddress serverIP(SERVER_IP);
+  //IPAddress myIP(MY_OWN_IP);
+  uint16_t requestPort = REQUEST_PORT;
+  if (ethClient.connect(serverIP, requestPort))
+  {
+    ethClient.print("POST ");
+    ethClient.print(REQUEST_FROM);
+    ethClient.println(" HTTP/1.1");
+    //ethClient.print("Host:  ");
+    //ethClient.println(myIP);
+    ethClient.println("User-Agent: Arduino/1.0");
+    ethClient.println("Connection: close");
+    ethClient.println("Content-Type: application/json;");
+    ethClient.print("Content-Length: ");
+    ethClient.println(PostData.length());
+    ethClient.println();
+    ethClient.println(PostData);
+    while (char c = ethClient.read())
+    {
+      output.concat(c);
+    }
+  }
+}
+
+/*
  *  Setup
  */
 void setup() 
@@ -188,13 +251,5 @@ void setup()
  */
 void loop() 
 {
-  String pass = GetPassword();
-  if (pass == "")
-    Serial.println("Invalid password");
-  else
-  {
-    Serial.println(pass);
-    Serial.print("Hash: ");
-    Serial.println(HashedPassword(pass));
-  }
+  // Something here
 }
