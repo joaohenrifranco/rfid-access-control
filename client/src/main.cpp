@@ -11,6 +11,7 @@
 #include <MFRC522.h>
 #include <Ethernet.h>
 #include <Keypad.h>
+#include <Hash.h>
 
 /*
  *  Macros
@@ -147,6 +148,23 @@ String GetPassword ()
 }
 
 /*
+ *  String HashedPassword (String password);
+ *
+ *  Description:
+ *  - Function to hash an existing password
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] String password: the plain text password to be hashed
+ *
+ *  Returns:
+ *  [String] The hash function result
+ */
+String HashedPassword (String password)
+{
+  return (sha1(password));
+}
+
+/*
  *  Setup
  */
 void setup() 
@@ -174,5 +192,9 @@ void loop()
   if (pass == "")
     Serial.println("Invalid password");
   else
+  {
     Serial.println(pass);
+    Serial.print("Hash: ");
+    Serial.println(HashedPassword(pass));
+  }
 }
