@@ -1,0 +1,26 @@
+CREATE TABLE User (
+	UserID INTEGER PRIMARY KEY,
+	UserAccessLevel INTEGER,
+	UserName TEXT UNIQUE,
+	UserRFIDTag TEXT UNIQUE,
+	UserHashedPassword TEXT
+); 
+
+CREATE TABLE Room (
+	RoomID INTEGER PRIMARY KEY,
+	RoomAccessLevel INTEGER,
+	RoomName TEXT UNIQUE
+);
+
+CREATE TABLE Log (
+	LogID INTEGER PRIMARY KEY,
+	RoomID INTEGER,
+	UserID INTEGER,
+	LogTypeID INTEGER,
+	LogTime TEXT
+);
+
+CREATE TABLE LogType (
+	LogTypeID INTEGER PRIMARY KEY,
+	LogDescription TEXT UNIQUE
+);
