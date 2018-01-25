@@ -168,7 +168,7 @@ String HashedPassword (String password)
 }
 
 /*
- *  String GeneratePostData (String rfidTag, byte roomId, byte action, byte status);
+ *  String GeneratePostData (String rfidTag, byte roomId, byte action);
  *
  *  Description:
  *  - Generates a JSON format text to send through HTTP post
@@ -177,12 +177,11 @@ String HashedPassword (String password)
  *  [INPUT] String rfidTag: the RFID Tag read by function above
  *  [INPUT] byte roomId: the ID of the room where this client is
  *  [INPUT] byte action: indicates if the person is entering or leaving the room (level 3 security purposes)
- *  [INPUT] byte status: <<FILL HERE>>
  *
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GeneratePostData (String rfidTag, byte roomId, byte action, byte status)
+String GeneratePostData (String rfidTag, byte roomId, byte action)
 {
   String aux = "{\n\t\"rfidTag\":\"";
   aux.concat(rfidTag);
@@ -190,19 +189,28 @@ String GeneratePostData (String rfidTag, byte roomId, byte action, byte status)
   aux.concat(String(roomId));
   aux.concat(",\n\t\"action\":");
   aux.concat(String(action));
-  aux.concat(",\n\t\"status\":");
-  aux.concat(String(status));
   aux.concat("\n}");
   return aux;
 }
 
 /*
+ *  String SendPostRequest (String rfidTag, byte roomId, byte action, byte status);
  *
+ *  Description:
+ *  - Does a POST Request
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] String rfidTag: the RFID Tag read by function above
+ *  [INPUT] byte roomId: the ID of the room where this client is
+ *  [INPUT] byte action: indicates if the person is entering or leaving the room (level 3 security purposes)
+ *
+ *  Returns:
+ *  -
  */
-void SendPostRequest(String rfidTag, byte roomId, byte action, byte status)
+void SendPostRequest(String rfidTag, byte roomId, byte action)
 {
   String output = "";
-  String PostData = GeneratePostData(rfidTag, roomId, action, status);
+  String PostData = GeneratePostData(rfidTag, roomId, action);
   IPAddress serverIP(SERVER_IP);
   //IPAddress myIP(MY_OWN_IP);
   uint16_t requestPort = REQUEST_PORT;
@@ -220,10 +228,12 @@ void SendPostRequest(String rfidTag, byte roomId, byte action, byte status)
     ethClient.println(PostData.length());
     ethClient.println();
     ethClient.println(PostData);
+    /*  Reading method (don't really know how to do it)
     while (char c = ethClient.read())
     {
       output.concat(c);
     }
+    */
   }
 }
 
