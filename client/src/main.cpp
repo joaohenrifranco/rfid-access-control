@@ -17,7 +17,7 @@
  *  Macros
  */
 #define SERIAL_SPEED      9600
-#define MAC_ADDRESS       {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED}
+#define MAC_ADDRESS       {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED} // Change MAC for individual modules
 //#define IP_ADDRESS        {192, 168, 88, 88}    //MY_OWN_IP
 //#define GATEWAY           {192, 168, 88, 1}
 //#define SUBNET            {255, 255, 255, 0}
@@ -261,5 +261,17 @@ void setup()
  */
 void loop() 
 {
-  // Something here
+  String tag = "";
+  tag = ReadRFIDTag();
+  while (tag == "")
+  {
+    Serial.println("Approach your card");
+    tag = ReadRFIDTag();
+    delay(500);
+  }
+  Serial.print("Card tag: ");
+  Serial.println(tag);
+  String pw = GetPassword();
+  Serial.print("Password: ");
+  Serial.println(pw);
 }
