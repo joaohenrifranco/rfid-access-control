@@ -14,4 +14,4 @@ def index(request):
         response['roomId'] = clientId
         response['action'] = action
 
-    return JsonResponse(response)
+        return JsonResponse(response)
