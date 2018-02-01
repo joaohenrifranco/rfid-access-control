@@ -7,17 +7,22 @@ class User(models.Model):
 	hashed_password = models.CharField(max_length=40)
 
 
+class Room(models.Model):
+	name = models.CharField(max_length=200)
+	access_level = models.PositiveIntegerField
+
+
 class Event(models.Model):
 	EVENT_TYPE_CHOICES = (
     	('0', 'authorized'),
-    	('1', 'tag not found')
-		('2', 'invalid password')
-		('3', 'insufficient privileges')
+    	('1', 'tag not found'),
+		('2', 'invalid password'),
+		('3', 'insufficient privileges'),
 	)
 
 	READER_POSITION_CHOICES = (
     	('0', 'outside'),
-    	('1', 'inside')
+    	('1', 'inside'),
 	)
 
 	user = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -25,7 +30,3 @@ class Event(models.Model):
 	date = models.DateTimeField('event occurred')
 	event_type = models.CharField(max_length=50, choices=EVENT_TYPE_CHOICES)
 	reader_position = models.CharField(max_length=7, choices=READER_POSITION_CHOICES)
-
-class Room(models.Model):
-	name = models.CharField(max_length=200)
-	access_level = models.PositiveIntegerField
