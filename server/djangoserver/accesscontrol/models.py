@@ -9,15 +9,15 @@ class User(models.Model):
 
 class Event(models.Model):
 	EVENT_TYPE_CHOICES = (
-    ('0', 'authorized'),
-    ('1', 'tag not found')
+    	('0', 'authorized'),
+    	('1', 'tag not found')
 		('2', 'invalid password')
 		('3', 'insufficient privileges')
 	)
 
 	READER_POSITION_CHOICES = (
-    ('0', 'outside'),
-    ('1', 'inside')
+    	('0', 'outside'),
+    	('1', 'inside')
 	)
 
 	user = models.ForeignKey(User, on_delete=models.PROTECT)
