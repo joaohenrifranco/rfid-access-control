@@ -1,16 +1,24 @@
 from django.db import models
 
+ACCESS_LEVEL_CHOICES = (
+	('0', 'Visitor'),
+	('1', 'Level 1'),
+	('2', 'Level 2'),
+	('3', 'Level 3'),
+	('4', 'Level 4'),
+	('5', 'Level 5'),
+)
+
 class User(models.Model):
 	name = models.CharField(max_length=200)
-	access_level = models.PositiveIntegerField
+	access_level = models.CharField(max_length=7, choices=ACCESS_LEVEL_CHOICES, default='0')
 	rfid_tag = models.CharField(max_length=8)
 	hashed_password = models.CharField(max_length=40)
 
-
 class Room(models.Model):
-	name = models.CharField(max_length=200)
-	access_level = models.PositiveIntegerField
-
+	name = models.CharField(max_length=15)
+	description = models.TextField
+	access_level = models.CharField(max_length=7, choices=ACCESS_LEVEL_CHOICES, default='5')
 
 class Event(models.Model):
 	EVENT_TYPE_CHOICES = (
@@ -18,6 +26,7 @@ class Event(models.Model):
     	('1', 'tag not found'),
 		('2', 'invalid password'),
 		('3', 'insufficient privileges'),
+		('4', 'timeout')
 	)
 
 	READER_POSITION_CHOICES = (
