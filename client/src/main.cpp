@@ -11,7 +11,7 @@
 #include <MFRC522.h>
 #include <Ethernet.h>
 #include <Keypad.h>
-#include <Hash.h>
+#include <sha256.h>
 
 /*
  *  Macros
@@ -151,6 +151,29 @@ String GetPassword ()
 }
 
 /*
+ *  String readableHash(uint8_t* hash);
+ *
+ *  Description:
+ *  - Function to convert hashed password to a readable string
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] String hash: the hashed password
+ *
+ *  Returns:
+ *  [String] A 64-character long string with containing the hashed password
+ */
+String readableHash(uint8_t* hash)
+{
+  String out = "";
+  for (byte i = 0; i < 32; i++)
+  {
+    out.concat("0123456789abcdef"[hash [i] >> 4]);
+    out.concat("0123456789abcdef"[hash [i] & 0xf]);
+  }
+  return out;
+}
+
+/*
  *  String HashedPassword (String password);
  *
  *  Description:
@@ -164,7 +187,12 @@ String GetPassword ()
  */
 String HashedPassword (String password)
 {
-  return (sha1(password));
+  Sha256 hash_function;
+  uint8_t *hash;
+  hash_function.init();
+  hash_function.print(password);
+  hash = hash_function.result();
+  return readableHash(hash);
 }
 
 /*
@@ -261,6 +289,7 @@ void setup()
  */
 void loop() 
 {
+  /*  Code for testing the keypad and RFID module
   String tag = "";
   tag = ReadRFIDTag();
   while (tag == "")
@@ -274,4 +303,11 @@ void loop()
   String pw = GetPassword();
   Serial.print("Password: ");
   Serial.println(pw);
+  */
+  /*  Code for testing the SHA-256 hash function
+  String to_hash = "5077";
+  String hashed = HashedPassword(to_hash);
+  Serial.println(hashed);
+  delay (1000);
+  */
 }
