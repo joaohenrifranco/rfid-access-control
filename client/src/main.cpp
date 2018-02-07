@@ -16,6 +16,7 @@
 /*
  *  Macros
  */
+#define ROOM_ACCESS_LEVEL 2
 #define SERIAL_SPEED      9600
 #define MAC_ADDRESS       {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED} // Change MAC for individual modules
 //#define IP_ADDRESS        {192, 168, 88, 88}    //MY_OWN_IP
@@ -41,8 +42,10 @@
 /*
  *  Pins
  */
-#define SS_PIN            53
-#define RST_PIN           49
+#define SS_PIN_IN         53
+#define RST_PIN_IN        49
+#define SS_PIN_OUT        255
+#define RST_PIN_OUT       255
 #define LED_R             47
 #define LED_G             45
 #define LED_B             43
@@ -50,9 +53,10 @@
 #define KEYPAD_COL_PINS   {5, 6, 7}
 
 /*
- *  Declaring the RFID module
+ *  Declaring the RFID modules
  */
-MFRC522 rfid(SS_PIN, RST_PIN);
+MFRC522 rfid_in(SS_PIN_IN, RST_PIN_IN);
+MFRC522 rfid_out(SS_PIN_OUT, RST_PIN_OUT);
 
 /*
  *  Declaring IP, MAC and the ethernet client itself
@@ -104,7 +108,7 @@ void WriteRGB (byte color[])
  *  Returns:
  *  [String] The UID tag itself in uppercase
  */
-String ReadRFIDTag ()
+String ReadRFIDTag (MFRC522 rfid)
 {
   if ( ! rfid.PICC_IsNewCardPresent())
     return "";
@@ -266,6 +270,19 @@ void SendPostRequest(String rfidTag, byte roomId, byte action)
 }
 
 /*
+ *  void UnlockDoor (void);
+ *
+ *  Description:
+ *  - Procedure to unlock the door
+ */
+void UnlockDoor (void)
+{
+  /*
+   *  TODO
+   */
+}
+
+/*
  *  Setup
  */
 void setup() 
@@ -275,7 +292,8 @@ void setup()
   // Starts SPI communication for devices
   SPI.begin();
   // Initializes the RFID module
-  rfid.PCD_Init();
+  rfid_in.PCD_Init();
+  //rfid_out.PCD_Init();
   // Initializes the Ethernet module
   // Ethernet.begin(mac);
   // Prints messages indicating that all setup has been done
@@ -291,11 +309,11 @@ void loop()
 {
   /*  Code for testing the keypad and RFID module
   String tag = "";
-  tag = ReadRFIDTag();
+  tag = ReadRFIDTag(rfid_in);
   while (tag == "")
   {
     Serial.println("Approach your card");
-    tag = ReadRFIDTag();
+    tag = ReadRFIDTag(rfid_in);
     delay(500);
   }
   Serial.print("Card tag: ");
@@ -310,4 +328,62 @@ void loop()
   Serial.println(hashed);
   delay (1000);
   */
+  /*  Full code for Arduino Client (still in development) */
+  // Reads tag until it's not NONE and check if the person is entering or leaving the room
+  String tag = "";
+  bool enteringRoom = false;
+  while (tag == "")
+  {
+    tag = ReadRFIDTag(rfid_in);
+    if (tag != "")
+    {
+      enteringRoom = true;
+      break;
+    }
+    tag = ReadRFIDTag(rfid_out);
+    if (tag != "")
+    {
+      enteringRoom = false;
+      break;
+    }
+  }
+  // Generates POST data, send request to server and waits for response
+  bool authorized = false;
+  /*
+   *  TODO
+   */
+  // If authorized, check room's access level
+  if (authorized == true)
+    if (ROOM_ACCESS_LEVEL >= 3)
+    {
+      // If access level is higher or equal to 3, check if the person is leaving
+      if (enteringRoom == false)
+      {
+        // If the person is leaving, unlocks the door
+        UnlockDoor();
+      }
+      else
+      {
+        // If the person is entering, ask for password and crypt it with SHA-256 algorithm
+        String password = HashedPassword(GetPassword());
+        if (password != "")
+        {
+          // If the password isn't NONE, generates POST data, send request to server and waits for response
+          bool passwordAccepted = false;
+          /*
+           *  TODO
+           */
+          if (passwordAccepted == true)
+          {
+            // If the password is OK, unlocks the door
+            UnlockDoor();
+          }
+        }
+      }
+    }
+    else
+    {
+      // If access level is lower or equal to 2, unlocks the door
+      UnlockDoor();
+    }
 }
