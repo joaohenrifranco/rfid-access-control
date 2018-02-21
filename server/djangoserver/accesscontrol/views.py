@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from .models import *
 
-REQUIRE_LEVEL_THRESHOLD = 3
+REQUIRE_PASSWORD_LEVEL_THRESHOLD = 3
 
 UNKNOWN_ERROR = -1
 AUTHORIZED = 0
@@ -17,7 +17,7 @@ VISITOR_AUTHORIZED = 6
 def index(request):
     return HttpResponse("Access control api is online!")
 
-@csrf_exempt
+@csrf_exempt # Disables CSRF verification for this method
 def request_unlock(request):
     if request.method == 'GET':
         return index(request)
@@ -32,7 +32,7 @@ def request_unlock(request):
         # Tries to get user with request's rfid tag
         try:
             user = User.objects.get(rfid_tag=request_rfid_tag)
-        except  :
+        except User.DoesNotExist:
             response['status'] =  RFID_NOT_FOUND
             return JsonResponse(response)
         except:
@@ -47,20 +47,20 @@ def request_unlock(request):
             return JsonResponse(response)
 
         # Checks if permission should be denied
-        if user.accesslevel < room.accesslevel:
+        if user.access_level < room.access_level:
             response['status'] = INSUFFICIENT_PRIVILEGES
-            return JsonResponse()
+            return JsonResponse(response)
 
         # Checks if room needs password
-        if (room.accesslevel >= REQUIRE_LEVEL_THRESHOLD) and (request_action != 1):
+        if (room.access_level >= REQUIRE_PASSWORD_LEVEL_THRESHOLD) and (request_action != 1):
             response['status'] = PASSWORD_REQUIRED
-            return JsonResponse()
+            return JsonResponse(response)
         
         # If reaches this point, authorize unlock
         response['status'] = AUTHORIZED
         return JsonResponse(response)
 
-@csrf_exempt
+@csrf_exempt # Disables CSRF verification for this method
 def authenticate(request):
     if request.method == 'GET':
         return index(request)
@@ -69,8 +69,10 @@ def authenticate(request):
         request_hashed_password = request.POST['password']
         request_user = request.POST['rfidTag']
         
+        response = {}
+        
         try:
-            user = User.objects.get(rfid_tag=request_rfid_tag)
+            user = User.objects.get(rfid_tag=request_user)
         except:
             response['status'] = UNKNOWN_ERROR
             return JsonResponse(response)
@@ -82,7 +84,7 @@ def authenticate(request):
         response['status'] = AUTHORIZED
         return JsonResponse(response)
 
-@csrf_exempt
+@csrf_exempt # Disables CSRF verification for this method
 def authorize_visitor(request):
     if request.method == 'GET':
         return index(request)
@@ -90,11 +92,17 @@ def authorize_visitor(request):
     elif request.method == 'POST':
         request_user = request.POST['rfidTag']
         request_visitor = request.POST['rfidTagVisitor']
+
+        response = {}
         
         try:
             user = User.objects.get(rfid_tag=request_user)
         except:
             response['status'] = RFID_NOT_FOUND
+            return JsonResponse(response)
+
+        if (user.access_level == 0):
+            response['status'] = INSUFFICIENT_PRIVILEGES
             return JsonResponse(response)
 
         try:
