@@ -5,12 +5,14 @@ from .models import *
 
 REQUIRE_LEVEL_THRESHOLD = 3
 
-SERVER_SETUP_ERROR = -1
+UNKNOWN_ERROR = -1
 AUTHORIZED = 0
 RFID_NOT_FOUND = 1
 INSUFFICIENT_PRIVILEGES = 2
 WRONG_PASSWORD = 3
 PASSWORD_REQUIRED = 4
+VISITOR_RFID_NOT_FOUND = 5
+VISITOR_AUTHORIZED = 6
 
 def index(request):
     return HttpResponse("Access control api is online!")
@@ -34,14 +36,14 @@ def request_unlock(request):
             response['status'] =  RFID_NOT_FOUND
             return JsonResponse(response)
         except:
-            response['status'] = SERVER_SETUP_ERROR
+            response['status'] = UNKNOWN_ERROR
             return JsonResponse(response)
 
         # Tries to get room with request's room id
         try:
             room = Room.objects.get(name=request_room_id)
         except:
-            response['status'] = SERVER_SETUP_ERROR
+            response['status'] = UNKNOWN_ERROR
             return JsonResponse(response)
 
         # Checks if permission should be denied
@@ -70,7 +72,7 @@ def authenticate(request):
         try:
             user = User.objects.get(rfid_tag=request_rfid_tag)
         except:
-            response['status'] = SERVER_SETUP_ERROR
+            response['status'] = UNKNOWN_ERROR
             return JsonResponse(response)
 
         if user.hashed_password != request_hashed_password:
@@ -87,19 +89,19 @@ def authorize_visitor(request):
     
     elif request.method == 'POST':
         request_user = request.POST['rfidTag']
-        request_ = request.POST['rfidTagVisitor']
+        request_visitor = request.POST['rfidTagVisitor']
         
         try:
-            user = User.objects.get(rfid_tag=request_rfid_tag)
-        except:
-            response['status'] = SERVER_SETUP_ERROR
-            return JsonResponse(response)
-
-        try:
-            visitor = User.objects.get(rfid_tag=request_rfid_tag)
+            user = User.objects.get(rfid_tag=request_user)
         except:
             response['status'] = RFID_NOT_FOUND
             return JsonResponse(response)
 
-        response['status'] = AUTHORIZED
+        try:
+            visitor = User.objects.get(rfid_tag=request_visitor)
+        except:
+            response['status'] = RFID_NOT_FOUND
+            return JsonResponse(response)
+
+        response['status'] = VISITOR_AUTHORIZED
         return JsonResponse(response)
