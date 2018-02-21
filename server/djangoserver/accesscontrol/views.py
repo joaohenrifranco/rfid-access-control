@@ -29,6 +29,8 @@ def request_unlock(request):
 
         response = {}
 
+        #log = Event(user=request_rfid_tag, tagline='All the latest Beatles news.')
+
         # Tries to get user with request's rfid tag
         try:
             user = User.objects.get(rfid_tag=request_rfid_tag)
@@ -42,6 +44,9 @@ def request_unlock(request):
         # Tries to get room with request's room id
         try:
             room = Room.objects.get(name=request_room_id)
+        except Room.DoesNotExist:
+            response['status'] =  UNKNOWN_ERROR
+            return JsonResponse(response)
         except:
             response['status'] = UNKNOWN_ERROR
             return JsonResponse(response)
@@ -73,6 +78,9 @@ def authenticate(request):
         
         try:
             user = User.objects.get(rfid_tag=request_user)
+        except User.DoesNotExist:
+            response['status'] =  RFID_NOT_FOUND
+            return JsonResponse(response)
         except:
             response['status'] = UNKNOWN_ERROR
             return JsonResponse(response)
@@ -101,7 +109,7 @@ def authorize_visitor(request):
             response['status'] = RFID_NOT_FOUND
             return JsonResponse(response)
 
-        if (user.access_level == 0):
+        if (user.access_level == 0): 
             response['status'] = INSUFFICIENT_PRIVILEGES
             return JsonResponse(response)
 

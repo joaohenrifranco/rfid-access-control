@@ -30,20 +30,22 @@ class Room(models.Model):
 
 class Event(models.Model):
 	EVENT_TYPE_CHOICES = (
-    	('0', 'authorized'),
-    	('1', 'tag not found'),
-		('2', 'invalid password'),
-		('3', 'insufficient privileges'),
-		('4', 'timeout')
+    	(0, 'authorized'),
+    	(1, 'tag not found'),
+		(2, 'invalid password'),
+		(3, 'insufficient privileges'),
+		(4, 'open door timeout'),
+		(5, 'visitor tag not found'),
+		(-1, 'unknown error')
 	)
 
 	READER_POSITION_CHOICES = (
-    	('0', 'outside'),
-    	('1', 'inside'),
+    	(0, 'outside'),
+    	(1, 'inside'),
 	)
 
 	user = models.ForeignKey(User, on_delete=models.PROTECT)
 	room = models.ForeignKey(Room, on_delete=models.PROTECT)
 	date = models.DateTimeField('event occurred')
-	event_type = models.CharField(max_length=50, choices=EVENT_TYPE_CHOICES)
-	reader_position = models.CharField(max_length=7, choices=READER_POSITION_CHOICES)
+	event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES)
+	reader_position = models.IntegerField(choices=READER_POSITION_CHOICES)
