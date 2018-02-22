@@ -38,7 +38,7 @@ def request_unlock(request):
             user = User.objects.get(rfid_tag=request_rfid_tag)
             room = Room.objects.get(name=request_room_id)
         except Room.DoesNotExist:
-            log.event_type = UNKNOWN_ERROR
+            log.event_type = ROOM_NOT_FOUND
             response['status'] =  ROOM_NOT_FOUND
             return JsonResponse(response)
         except User.DoesNotExist:
@@ -50,22 +50,35 @@ def request_unlock(request):
             log.event_type = UNKNOWN_ERROR
             response['status'] = UNKNOWN_ERROR
             return JsonResponse(response)
+        finally:
+            log.save()
         
+        # Now a user and a room can be attributted to the log
+        log.room = room
+        log.user = user
+        log.save()
+
         # Always unlock door on exit
         if (request_action == 1):
             log.event_type = AUTHORIZED
-            log.user = user
+            log.save()
 
             response['status'] = AUTHORIZED
             return JsonResponse(response)
 
         # Checks if RFID is from a visitor
         if (user.access_level == 0):
+            log.event_type = VISITOR_RFID_FOUND
+            log.save()
+            
             response['status'] = VISITOR_RFID_FOUND
-            return JsonResponse(response) 
+            return JsonResponse(response)
 
         # Checks if permission should be denied
         if user.access_level < room.access_level:
+            log.event_type = INSUFFICIENT_PRIVILEGES
+            log.save()
+
             response['status'] = INSUFFICIENT_PRIVILEGES
             return JsonResponse(response)
 
