@@ -52,5 +52,5 @@ class Event(models.Model):
 	date = models.DateTimeField('event occurred')
 	event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES)
 	reader_position = models.IntegerField(choices=READER_POSITION_CHOICES)
-	rfids = models.ArrayField(models.CharField(max_length=8, blank=True))
+#	rfids = models.ArrayField(models.CharField(max_length=8, blank=True))
 
