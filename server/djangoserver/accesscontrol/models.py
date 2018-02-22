@@ -14,7 +14,7 @@ class User(models.Model):
 	name = models.CharField(max_length=200)
 	access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='0')
 	rfid_tag = models.CharField(max_length=8)
-	hashed_password = models.CharField(max_length=40)
+	hashed_password = models.CharField(max_length=64)
 
 	# Necessary to show name correctly at DjangoAdmin
 	def __str__(self):
