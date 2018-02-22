@@ -8,6 +8,8 @@
  *  Libraries
  */
 #include <SPI.h>
+#include <stdio.h>
+#include <string.h>
 #include <MFRC522.h>
 #include <Ethernet.h>
 #include <Keypad.h>
@@ -16,57 +18,74 @@
 /*
  *  Macros
  */
-#define ROOM_ACCESS_LEVEL 2
-#define SERIAL_SPEED      9600
-#define MAC_ADDRESS       {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED} // Change MAC for individual modules
-//#define IP_ADDRESS        {192, 168, 88, 88}    //MY_OWN_IP
-//#define GATEWAY           {192, 168, 88, 1}
-//#define SUBNET            {255, 255, 255, 0}
-#define SERVER_IP         {192, 168, 88, 61}
-#define REQUEST_UNLOCK    "http://192.168.88.61:8000/api/request-unlock"
-#define AUTHENTICATE      "http://192.168.88.61:8000/api/authenticate"
-#define AUTHORIZE_VISITOR "http://192.168.88.61:8000/api/authorize-visitor"
-#define REQUEST_PORT      8000                  //Standard HTTP port
-#define BLACK             {0, 0, 0}             //Turn LED off
-#define BLUE              {0, 0, 255}
-#define GREEN             {0, 255, 0}
-#define AQUA              {0, 255, 255}         //Light blue
-#define RED               {255, 0, 0}
-#define FUCHSIA           {255, 0, 255}         //Kinda purple
-#define YELLOW            {255, 255, 0}
-#define WHITE             {255, 255, 255}
-#define KEYPAD_LINES      4
-#define KEYPAD_COLUMNS    3
-#define KEYS              {{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}, {'*', '0', '#'}}
-#define END_OF_PASSWORD   '#'
-#define QUIT_TYPING       '*'
+#define WHO_AM_I						"corredor"
+#define MAX_VISITOR_NUM			20
+#define SERIAL_SPEED      	9600
+#define MAC_ADDRESS       	{0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED} 		// Change MAC for individual modules
+#define SERVER_IP         	{192, 168, 88, 64}
+#define REQUEST_UNLOCK    	"/api/request-unlock"
+#define AUTHENTICATE      	"/api/authenticate"
+#define AUTHORIZE_VISITOR 	"/api/authorize-visitor"
+#define REQUEST_PORT      	8000                  									//Standard HTTP port
+#define KEYPAD_LINES      	4
+#define KEYPAD_COLUMNS    	3
+#define KEYS              	{{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}, {'*', '0', '#'}}
+#define END_OF_PASSWORD   	'#'
+#define QUIT_TYPING       	'*'
+#define NUM_READERS       	2
+byte BLACK [] =							{0, 0, 0};															//Turn LED off
+byte BLUE [] =							{0, 0, HIGH};
+byte GREEN [] =							{0, HIGH, 0};
+byte AQUA [] =							{0, HIGH, HIGH};												//Light blue
+byte RED [] =								{HIGH, 0, 0};
+byte FUCHSIA [] =						{HIGH, 0, HIGH};												//Kinda purple
+byte YELLOW [] =						{HIGH, HIGH, 0};
+byte WHITE [] =							{HIGH, HIGH, HIGH};
+#define WAITING_COLOR				YELLOW
+#define OK_COLOR						GREEN
+#define ERROR_COLOR					RED
+#define STANDBY_COLOR				WHITE
+#define DO_SOMETHING_COLOR	BLUE
+
+/*
+ *	Server Error Codes
+ */
+#define UNKNOWN_ERROR							-1
+#define AUTHORIZED								0
+#define RFID_NOT_FOUND						1
+#define INSUFFICIENT_PRIVILEGES		2
+#define WRONG_PASSWORD						3
+#define PASSWORD_REQUIRED					4
+#define VISITOR_RFID_FOUND				5
+#define VISITOR_AUTHORIZED				6
+#define VISITOR_RFID_NOT_FOUND		7
+#define ROOM_NOT_FOUND						8
+#define OPEN_DOOR_TIMEOUT					9
 
 /*
  *  Pins
  */
-#define SS_PIN_IN         53
-#define SS_PIN_OUT        48
-#define RST_PIN_IN        49
-#define RST_PIN_OUT       47
-#define LED_IN_R          27
-#define LED_IN_G          29
-#define LED_IN_B          31
-#define LED_OUT_R         26
-#define LED_OUT_G         28
-#define LED_OUT_B         30
-#define KEYPAD_LIN_PINS   {33, 35, 37, 39}
-#define KEYPAD_COL_PINS   {41, 43, 45}
+#define RST_PIN           					49
+#define LED_IN_R          					27
+#define LED_IN_G          					29
+#define LED_IN_B          					31
+#define LED_OUT_R         					26
+#define LED_OUT_G         					28
+#define LED_OUT_B         					30
+#define KEYPAD_LIN_PINS   					{33, 35, 37, 39}
+#define KEYPAD_COL_PINS   					{41, 43, 45}
+const byte SS_PIN_INSIDE = 					44;
+const byte SS_PIN_OUTSIDE = 				48;
 
 /*
  *  Declaring the RFID modules
  */
-MFRC522 rfid_in(SS_PIN_IN, RST_PIN_IN);
-MFRC522 rfid_out(SS_PIN_OUT, RST_PIN_OUT);
+const byte ssPins [] = {SS_PIN_OUTSIDE, SS_PIN_INSIDE};
+MFRC522 readers [NUM_READERS];
 
 /*
  *  Declaring IP, MAC and the ethernet client itself
  */
-//IPAddress ip(IP_ADDRESS);
 #if defined(WIZ550io_WITH_MACADDRESS)
 ;
 #else
@@ -83,10 +102,10 @@ byte keyPadColPins[KEYPAD_COLUMNS] = KEYPAD_COL_PINS;
 Keypad keyPad = Keypad(makeKeymap(keys), keyPadLinPins, keyPadColPins, KEYPAD_LINES, KEYPAD_COLUMNS);
 
 /*
- *  void WriteRGB (byte color[]);
+ *  void WriteRGB (byte color[], char inside_outside);
  *
  *  Description:
- *  - Procedure that changes LED color
+ *  - Procedure that changes the inside or outside LED color
  *
  *  Inputs/Outputs:
  *  [INPUT] byte color[]: array that contatins red, green and blue values
@@ -94,48 +113,74 @@ Keypad keyPad = Keypad(makeKeymap(keys), keyPadLinPins, keyPadColPins, KEYPAD_LI
  *  Returns:
  *  -
  */
-void WriteRGB (byte color[], char in_out)
+void WriteRGB (byte color[], char inside_outside)
 {
-  if (in_out == 'i')
-  {
-    byte pins[] = {LED_IN_R, LED_IN_G, LED_IN_B};
-    for (byte i = 0; i < 3; i++)
-      digitalWrite(pins[i], color[i]);
-  }
-  else if (in_out == 'o')
-  {
-    byte pins[] = {LED_OUT_R, LED_OUT_G, LED_OUT_B};
-    for (byte i = 0; i < 3; i++)
-      digitalWrite(pins[i], color[i]);
-  }
+	if (inside_outside == 'i')
+	{
+		byte pins[] = {LED_IN_R, LED_IN_G, LED_IN_B};
+		for (byte i = 0; i < 3; i++)
+			digitalWrite(pins[i], color[i]);
+	}
+	else if (inside_outside == 'o')
+	{
+		byte pins[] = {LED_OUT_R, LED_OUT_G, LED_OUT_B};
+		for (byte i = 0; i < 3; i++)
+			digitalWrite(pins[i], color[i]);
+	}
 }
 
 /*
- *  String ReadRFIDTag ();
+ *  String UID_toStr (byte *buffer, byte bufferSize);
  *
  *  Description:
- *  - Function to read an UID Tag from the RFID Module
+ *  - Function that converts the UID read from the RFID module to hex string
  *
  *  Inputs/Outputs:
- *  -
+ *  [INPUT] byte *buffer: from RFID module
+ * 	[INPUT] byte bufferSize: size of UID
  *
  *  Returns:
- *  [String] The UID tag itself in uppercase
+ *  [String] The UID tag itself
  */
-String ReadRFIDTag (MFRC522 rfid)
+String UID_toStr (byte *buffer, byte bufferSize)
 {
-  if ( ! rfid.PICC_IsNewCardPresent())
-    return "";
-  if ( ! rfid.PICC_ReadCardSerial())
-    return "";
-  String aux = "";
-  for (byte i = 0; i < rfid.uid.size; i++)
-  {
-    aux.concat(String(rfid.uid.uidByte[i] < 0x10 ? " 0" : " "));
-    aux.concat(String(rfid.uid.uidByte[i], HEX));
+	String aux = "";
+  for (byte i = 0; i < bufferSize; i++)
+	{
+    aux.concat(String(buffer[i] < 0x10 ? "0" : ""));
+    aux.concat(String(buffer[i], HEX));
   }
-  aux.toUpperCase();
-  return aux;
+	return aux;
+}
+
+/*
+ *  String ReadRFIDTags (char *entering_or_leaving);
+ *
+ *  Description:
+ *  - Function to read UID tags from all readers
+ *
+ *  Inputs/Outputs:
+ *  [OUTPUT] char *entering_or_leaving: indicates if the person is entering or leaving the room
+ *
+ *  Returns:
+ *  [String] The UID tag itself in uppercase or empty string
+ */
+String ReadRFIDTags (char *entering_or_leaving)
+{
+	*entering_or_leaving = 255;
+  String aux = "";
+  for (byte i = 0; i < NUM_READERS; i++)
+	{
+		aux = "";
+	if (readers[i].PICC_IsNewCardPresent() && readers[i].PICC_ReadCardSerial())
+	{
+		aux = UID_toStr(readers[i].uid.uidByte, readers[i].uid.size);
+		*entering_or_leaving = i;
+	}
+		if (aux != "")
+			return aux;
+  }
+	return aux;
 }
 
 /*
@@ -153,19 +198,19 @@ String ReadRFIDTag (MFRC522 rfid)
  */
 String GetPassword ()
 {
-  String aux = "";
-  char c = keyPad.getKey();
-  while (c != END_OF_PASSWORD)
-  {
-    if (c == QUIT_TYPING)
-      return "";
-    if (c)
-    {
-      aux.concat(c);
-    }
-    c = keyPad.getKey();
-  }
-  return aux;
+	String aux = "";
+	char c = keyPad.getKey();
+	while (c != END_OF_PASSWORD)
+	{
+		if (c == QUIT_TYPING)
+			return "";
+		if (c)
+		{
+			aux.concat(c);
+		}
+		c = keyPad.getKey();
+	}
+	return aux;
 }
 
 /*
@@ -182,13 +227,13 @@ String GetPassword ()
  */
 String readableHash(uint8_t* hash)
 {
-  String out = "";
-  for (byte i = 0; i < 32; i++)
-  {
-    out.concat("0123456789abcdef"[hash [i] >> 4]);
-    out.concat("0123456789abcdef"[hash [i] & 0xf]);
-  }
-  return out;
+	String out = "";
+	for (byte i = 0; i < 32; i++)
+	{
+		out.concat("0123456789abcdef"[hash [i] >> 4]);
+		out.concat("0123456789abcdef"[hash [i] & 0xf]);
+	}
+	return out;
 }
 
 /*
@@ -205,111 +250,151 @@ String readableHash(uint8_t* hash)
  */
 String HashedPassword (String password)
 {
-  Sha256 hash_function;
-  uint8_t *hash;
-  hash_function.init();
-  hash_function.print(password);
-  hash = hash_function.result();
-  return readableHash(hash);
+	Sha256 hash_function;
+	uint8_t *hash;
+	hash_function.init();
+	hash_function.print(password);
+	hash = hash_function.result();
+	return readableHash(hash);
 }
 
 /*
  *  String GenerateUnlockPostData (String rfidTag, byte roomId, byte action);
  *
  *  Description:
- *  - Generates a JSON format text to send through HTTP post
+ *  - Generates a JSON format text to send through HTTP POST to REQUEST_UNLOCK
  *
  *  Inputs/Outputs:
- *  [INPUT] String rfidTag: the RFID Tag read by function above
+ *  [INPUT] String rfidTag: the RFID Tag read by RFID module
  *  [INPUT] byte roomId: the ID of the room where this client is
- *  [INPUT] byte action: indicates if the person is entering or leaving the room (level 3 security purposes)
+ *  [INPUT] byte action: indicates if the person is entering or leaving the room
  *
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateUnlockPostData (String rfidTag, byte roomId, byte action)
+String GenerateUnlockPostData (String rfidTag, String roomId, byte action)
 {
-  String aux = "{\n\t\"rfidTag\":\"";
-  aux.concat(rfidTag);
-  aux.concat("\",\n\t\"roomId\":");
-  aux.concat(String(roomId));
-  aux.concat(",\n\t\"action\":");
-  aux.concat(String(action));
-  aux.concat("\n}");
-  return aux;
-}
-
-String GenerateAuthenticatePostData (String rfidTag, String password)
-{
-  String aux = "{\n\t\"rfidTag\":\"";
-  aux.concat(rfidTag);
-  aux.concat("\",\n\t\"password\":\"");
-  aux.concat(String(password));
-  aux.concat("\"\n}");
-  return aux;
-}
-
-String GenerateVisitorPostData (String rfidTag, String rfidTagVisitor)
-{
-  String aux = "{\n\t\"rfidTag\":\"";
-  aux.concat(rfidTag);
-  aux.concat("\",\n\t\"rfidTagVisitor\":\"");
-  aux.concat(String(rfidTagVisitor));
-  aux.concat("\"\n}");
-  return aux;
+	String aux = "{\n\t\"rfidTag\":\"";
+	aux.concat(rfidTag);
+	aux.concat("\",\n\t\"roomId\":\"");
+	aux.concat(roomId);
+	aux.concat("\",\n\t\"action\":");
+	aux.concat(String(action));
+	aux.concat("\n}");
+	return aux;
 }
 
 /*
- *  String SendPostRequest (String rfidTag, byte roomId, byte action, byte status);
+ *  String GenerateAuthenticatePostData (String rfidTag, String password);
+ *
+ *  Description:
+ *  - Generates a JSON format text to send through HTTP POST to REQUEST_UNLOCK
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] String rfidTag: the RFID Tag read by RFID module
+ *	[INPUT] String password: the user's read password
+ *
+ *  Returns:
+ *  [String] A JSON format text contatining the whole input data
+ */
+String GenerateAuthenticatePostData (String rfidTag, String password)
+{
+	String aux = "{\n\t\"rfidTag\":\"";
+	aux.concat(rfidTag);
+	aux.concat("\",\n\t\"password\":\"");
+	aux.concat(String(password));
+	aux.concat("\"\n}");
+	return aux;
+}
+
+/*	STILL IN DEVELOPMENT (ARRAY OF UIDs (ONE FOR EVERY VISITOR))
+String GenerateVisitorPostData (String rfidTag, String rfidTagVisitor)
+{
+	String aux = "{\n\t\"rfidTag\":\"";
+	aux.concat(rfidTag);
+	aux.concat("\",\n\t\"rfidTagVisitor\":\"");
+	aux.concat(String(rfidTagVisitor));
+	aux.concat("\"\n}");
+	return aux;
+}
+*/
+
+/*
+ *  String SendPostRequest (String postData, String requestFrom);
  *
  *  Description:
  *  - Does a POST Request
  *
  *  Inputs/Outputs:
- *  [INPUT] String rfidTag: the RFID Tag read by function above
- *  [INPUT] byte roomId: the ID of the room where this client is
- *  [INPUT] byte action: indicates if the person is entering or leaving the room (level 3 security purposes)
+ *  [INPUT] String postData: the JSON format POST data
+ *  [INPUT] String requestFrom: the API URL
  *
  *  Returns:
- *  -
+ *  [String] The server's response
  */
 String SendPostRequest(String postData, String requestFrom)
 {
-  String output = "";
-  IPAddress serverIP(SERVER_IP);
-  //IPAddress myIP(MY_OWN_IP);
-  int requestPort = REQUEST_PORT;
-  int connection = ethClient.connect("192.168.88.61", requestPort);
-  Serial.print("Connection output: ");
-  Serial.println(connection);
-  if (connection)
-  {
-    ethClient.print("POST ");
-    ethClient.print(requestFrom);
-    ethClient.println(" HTTP/1.1");
-    //ethClient.print("Host:  ");
-    //ethClient.println(myIP);
-    ethClient.println("User-Agent: Arduino/1.0");
-    ethClient.println("Connection: close");
-    ethClient.println("Content-Type: application/json;");
-    ethClient.print("Content-Length: ");
-    ethClient.println(postData.length());
-    ethClient.println();
-    ethClient.println(postData);
-    Serial.println("Post sent!");
-    //  Reading method (don't really know how to do it)
-    Serial.println("Getting results...");
-    output = ethClient.readString();
-    Serial.print("Result: ");
-    Serial.println(output);
-    /*
-    while (char c = ethClient.read())
-    {
-      output.concat(c);
-    }
-    */
-  }
-  return output;
+	String output = "";
+	IPAddress serverIP(SERVER_IP);
+	IPAddress myIP(Ethernet.localIP());
+	int requestPort = REQUEST_PORT;
+	int connection = ethClient.connect(serverIP, requestPort);
+	Serial.print("Connection: ");
+	Serial.println(connection);
+	if (connection)
+	{
+		ethClient.print("POST ");
+		ethClient.print(requestFrom);
+		ethClient.println(" HTTP/1.1");
+		ethClient.println("Content-Type: application/json;");
+		ethClient.println("Connection: close");
+		ethClient.println("User-Agent: Arduino/1.0");
+		ethClient.print("Content-Length: ");
+		ethClient.println(postData.length());
+		ethClient.println();
+		ethClient.println(postData);
+		ethClient.println();
+		output = ethClient.readString();
+		Serial.print("out: ");
+		Serial.println(output);
+	}
+	ethClient.stop();
+	return output;
+}
+
+/*
+ *  byte ParseResponse (String response);
+ *
+ *  Description:
+ *  - Parse the server's response to return numeric status
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] String response: Server's response
+ *
+ *  Returns:
+ *  [byte] Numeric error code from server
+ */
+byte ParseResponse (String response)
+{
+	byte status = 255;
+	String status_str = "";
+	char cResponse [200];
+	response.toCharArray(cResponse, 200);
+	char *teste = strstr(cResponse, "status");
+	for (byte i = 0; i < strlen(teste); i++)
+	{
+		if (teste[i] == '}')
+			break;
+		if ((teste[i] >= '0') && (teste[i] <= '9'))
+		{
+			status_str.concat(teste[i]);
+		}
+	}
+	//Serial.print("DEBUG: ");
+	//Serial.println(status_str);
+	if (status_str != "")
+		status = status_str.toInt();
+	return status;
 }
 
 /*
@@ -320,9 +405,7 @@ String SendPostRequest(String postData, String requestFrom)
  */
 void UnlockDoor (void)
 {
-  /*
-   *  TODO
-   */
+	//	TODO
 }
 
 /*
@@ -330,34 +413,44 @@ void UnlockDoor (void)
  */
 void setup() 
 {
-  // Starts serial communication for debugging purposes
-  Serial.begin(SERIAL_SPEED);
-  // Starts SPI communication for devices
-  SPI.begin();
-  // Initializes the RFID module
-  rfid_in.PCD_Init();
-  rfid_out.PCD_Init();
-  // Initializes the Ethernet module
-  Serial.println("Initializing Ethernet module...");
-  Ethernet.begin(mac);
-  Serial.print("My IP: ");
-  Serial.println(Ethernet.localIP());
-  Serial.println("Ok!");
-  // Prints messages indicating that all setup has been done
-  Serial.println("All set!");
-  Serial.println();
-  // <<WARNING>> Remember to dump all read characters from keypad before asking for password!
-
-
-
-  String postData = GenerateAuthenticatePostData ("12345", "senhasegura");
-  Serial.println(postData);
-  String output = SendPostRequest(postData, REQUEST_UNLOCK);
-  Serial.println(output);
-
-
-
-
+	// Starts serial communication for debugging purposes
+	Serial.begin(SERIAL_SPEED);
+	Serial.println();
+	Serial.println("=== Beginning Setup...");
+	// Starts SPI communication for devices
+	Serial.println();
+	Serial.println("-- Starting SPI...");
+	SPI.begin();
+	// Initializes LED pins as output
+	Serial.println();
+	Serial.println("-- Setting LEDs pins as output...");
+	pinMode(LED_IN_R, OUTPUT);
+	pinMode(LED_IN_G, OUTPUT);
+	pinMode(LED_IN_B, OUTPUT);
+	pinMode(LED_OUT_R, OUTPUT);
+	pinMode(LED_OUT_G, OUTPUT);
+	pinMode(LED_OUT_B, OUTPUT);
+	// Initializes the RFID modules
+	Serial.println();
+	Serial.println("-- Initializing RFID modules...");
+	for (byte i = 0; i < NUM_READERS; i++)
+	{
+		readers[i].PCD_Init(ssPins[i], RST_PIN);
+	Serial.print("Reader ");
+	Serial.print(i + 1);
+		Serial.print(" initialized!\tVersion: ");
+		readers[i].PCD_DumpVersionToSerial();
+	}
+	// Initializes the Ethernet module
+	Serial.println();
+	Serial.println("-- Initializing Ethernet module...");
+	Ethernet.begin(mac);
+	Serial.print("- My IP: ");
+	Serial.println(Ethernet.localIP());
+	// Prints messages indicating that all setup has been done
+	Serial.println();
+	Serial.println("=== All setup is done!");
+	Serial.println();
 }
 
 /*
@@ -365,82 +458,175 @@ void setup()
  */
 void loop() 
 {
-  /*
-  String tag = "";
-  tag = ReadRFIDTag(rfid_in);
-  while (tag == "")
-  {
-    Serial.println("Approach your card");
-    delay(500);
-  }
-  Serial.print("Card tag: ");
-  Serial.println(tag);
-  String pw = GetPassword();
-  Serial.print("Password: ");
-  Serial.println(pw);
-  String hashed = HashedPassword(pw);
-  Serial.print("Hashed: ");
-  Serial.println(hashed);
-  */
+	/*
+	String tag = "";
+	tag = ReadRFIDTags();
+	while (tag == "")
+	{
+		Serial.println("Approach your card");
+		delay(500);
+		tag = ReadRFIDTags();
+	}
+	Serial.print("Card tag: ");
+	Serial.println(tag);
+	String pw = GetPassword();
+	Serial.print("Password: ");
+	Serial.println(pw);
+	String hashed = HashedPassword(pw);
+	Serial.print("Hashed: ");
+	Serial.println(hashed);
+	*/
 
 
+	/*  Full code for Arduino Client (still in development) */
+	String pw = "";
+	String tag = "";
+	byte status = 255;
+	String hashed = "";
+	String output = "";
+	char action = 'z';
+	char not_action = 'z';
+	String postData = "";
+	String tagsArray [MAX_VISITOR_NUM];
+	char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
 
-  /*  Full code for Arduino Client (still in development) */
-  
+	// Resets the tagsArray
+	for (byte i = 0; i < MAX_VISITOR_NUM; i++)
+		tagsArray[i] = "";
 
-  /*
-  // Reads tag until it's not NONE and check if the person is entering or leaving the room
-  String tag = "";
-  bool enteringRoom = false;
-  while (tag == "")
-  {
-    tag = ReadRFIDTag(rfid_in);
-    if (tag != "")
-    {
-      enteringRoom = true;
-      break;
-    }
-    tag = ReadRFIDTag(rfid_out);
-    if (tag != "")
-    {
-      enteringRoom = false;
-      break;
-    }
-  }
-  // Generates POST data, send request to server and waits for response
-  bool authorized = false;
-  // *** TODO ***
-  // If authorized, check room's access level
-  if (authorized == true)
-    if (ROOM_ACCESS_LEVEL >= 3)
-    {
-      // If access level is higher or equal to 3, check if the person is leaving
-      if (enteringRoom == false)
-      {
-        // If the person is leaving, unlocks the door
-        UnlockDoor();
-      }
-      else
-      {
-        // If the person is entering, ask for password and crypt it with SHA-256 algorithm
-        String password = HashedPassword(GetPassword());
-        if (password != "")
-        {
-          // If the password isn't NONE, generates POST data, send request to server and waits for response
-          bool passwordAccepted = false;
-          // *** TODO ***
-          if (passwordAccepted == true)
-          {
-            // If the password is OK, unlocks the door
-            UnlockDoor();
-          }
-        }
-      }
-    }
-    else
-    {
-      // If access level is lower or equal to 2, unlocks the door
-      UnlockDoor();
-    }
-    */
+	// Standby mode
+	WriteRGB(STANDBY_COLOR, 'i');
+	WriteRGB(STANDBY_COLOR, 'o');
+	// Starts to read
+	Serial.println("=== Starting to read...");
+	tag = ReadRFIDTags(&entering_or_leaving);
+	while (tag == "")
+	{
+		Serial.println("-- Reading...");
+		delay (50);
+		tag = ReadRFIDTags(&entering_or_leaving);
+	}
+	Serial.print("UID Tag: ");
+	Serial.println(tag);
+	// Found an UID. Turns one side to WAITING_MODE and the other to BLOCKED_MODE
+	if (entering_or_leaving == 0)
+	{
+		action = 'o';
+		not_action = 'i';
+		Serial.println("-- User in ENTERING the room");
+	}
+	else
+	{
+		action = 'i';
+		not_action = 'o';
+		Serial.println("-- User in LEAVING the room");
+	}
+	WriteRGB(WAITING_COLOR, action);
+	WriteRGB(ERROR_COLOR, not_action);
+	// Generates POST data
+	Serial.println("-- Generating POST data...");
+	postData = GenerateUnlockPostData (tag, WHO_AM_I, entering_or_leaving);
+	Serial.println(postData);
+	// Sends request to REQUEST_UNLOCK and gets response
+	output = SendPostRequest(postData, REQUEST_UNLOCK);
+	Serial.print ("-- Server response: ");
+	Serial.println(output);
+	// Parse response's status
+	status = ParseResponse(output);
+	Serial.print("-- Status: ");
+	Serial.println(status);
+	// If already authorized, unlocks door
+	if (status == AUTHORIZED)
+	{
+		UnlockDoor();
+		WriteRGB(OK_COLOR, action);
+		//
+		//
+		//	REMOVE DELAY (or reduce it)
+		//
+		//
+		delay(5000);
+	}
+	// If needs password, blinks OK_COLOR and asks for typing
+	else if (status == PASSWORD_REQUIRED)
+	{
+		for (byte i = 0; i < 2; i ++)
+		{
+			WriteRGB(DO_SOMETHING_COLOR, action);
+			delay(250);
+			WriteRGB(BLACK, action);
+			delay(250);
+		}
+		WriteRGB(DO_SOMETHING_COLOR, action);
+		Serial.println("-- Waiting for password...");
+		// Gets password
+		pw = GetPassword();
+		Serial.print("-- Password: ");
+		Serial.println(pw);
+		// Blinks WAITING_COLOR once password is read
+		for (byte i = 0; i < 2; i ++)
+		{
+			WriteRGB(BLACK, action);
+			delay(250);
+			WriteRGB(WAITING_COLOR, action);
+			delay(250);
+		}
+		// Hashes password
+		Serial.println("-- Hashing password...");
+		hashed = HashedPassword(pw);
+		Serial.print("-- Hashed password (SHA-256): ");
+		Serial.println(hashed);
+		// Generates POST data for AUTHENTICATE API
+		Serial.println("-- Generating POST data...");
+		postData = GenerateAuthenticatePostData(tag, hashed);
+		Serial.println(postData);
+		// Sends POST data to AUTHENTICATE API
+		output = SendPostRequest(postData, AUTHENTICATE);
+		Serial.print ("-- Server response: ");
+		Serial.println(output);
+		// Parse response's status
+		status = ParseResponse(output);
+		Serial.print("-- Status: ");
+		Serial.println(status);
+		// If authorized
+		if (status == AUTHORIZED)
+		{
+			// Checks if there's any visitor on tagsArray
+			if (tagsArray[0] == "")
+			{
+				UnlockDoor();
+				WriteRGB(OK_COLOR, action);
+				//
+				//
+				//	REMOVE DELAY (or reduce it)
+				//
+				//
+				delay(5000);
+			}
+			// If there are visitor tags
+			else
+			{
+				//
+				//	TODO: Generates POST for AUTHORIZE_VISITOR, gets response and unlocks door.
+				//
+			}
+		}
+		else
+		{
+			WriteRGB(ERROR_COLOR, action);
+			delay (5000);
+		}
+	}
+	else if (status == VISITOR_RFID_FOUND)
+	{
+		//
+		// TODO: Appends visitors' UID to tagsArray until UID belongs to employee.
+		//
+	}
+	else
+	{
+		WriteRGB(ERROR_COLOR, action);
+		delay (5000);
+	}
+	//while(true);
 }
