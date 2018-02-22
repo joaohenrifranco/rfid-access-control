@@ -1,18 +1,12 @@
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+import json
+
 from .models import *
+from .errors import *
 
 REQUIRE_PASSWORD_LEVEL_THRESHOLD = 3
-
-UNKNOWN_ERROR = -1
-AUTHORIZED = 0
-RFID_NOT_FOUND = 1
-INSUFFICIENT_PRIVILEGES = 2
-WRONG_PASSWORD = 3
-PASSWORD_REQUIRED = 4
-VISITOR_RFID_NOT_FOUND = 5
-VISITOR_AUTHORIZED = 6
 
 def index(request):
     return HttpResponse("Access control api is online!")
@@ -23,13 +17,18 @@ def request_unlock(request):
         return index(request)
     
     elif request.method == 'POST':
-        request_rfid_tag = request.POST['rfidTag']
-        request_room_id = request.POST['roomId']
-        request_action = request.POST['action']
 
+        # Tries to parse json post body
+        try:
+            data = json.loads(request.body)
+            request_rfid_tag = data['rfidTag']
+            request_room_id = data['roomId']
+            request_action = data['action']
+        except:
+            return HttpResponse("Malformed POST: " + request.body)
+        
         response = {}
-
-        #log = Event(user=request_rfid_tag, tagline='All the latest Beatles news.')
+        log = Event()
 
         # Tries to get user with request's rfid tag
         try:
@@ -40,12 +39,22 @@ def request_unlock(request):
         except:
             response['status'] = UNKNOWN_ERROR
             return JsonResponse(response)
+        
+        # Always unlock door on exit
+        if (request_action == 1):
+            response['status'] = AUTHORIZED
+            return JsonResponse(response)
+
+        # Checks if RFID is from a visitor
+        if (user.access_level == 0):
+            response['status'] = VISITOR_RFID_FOUND
+            return JsonResponse(response) 
 
         # Tries to get room with request's room id
         try:
             room = Room.objects.get(name=request_room_id)
         except Room.DoesNotExist:
-            response['status'] =  UNKNOWN_ERROR
+            response['status'] =  ROOM_NOT_FOUND
             return JsonResponse(response)
         except:
             response['status'] = UNKNOWN_ERROR
@@ -57,7 +66,7 @@ def request_unlock(request):
             return JsonResponse(response)
 
         # Checks if room needs password
-        if (room.access_level >= REQUIRE_PASSWORD_LEVEL_THRESHOLD) and (request_action != 1):
+        if (room.access_level >= REQUIRE_PASSWORD_LEVEL_THRESHOLD):
             response['status'] = PASSWORD_REQUIRED
             return JsonResponse(response)
         
@@ -71,9 +80,14 @@ def authenticate(request):
         return index(request)
     
     elif request.method == 'POST':
-        request_hashed_password = request.POST['password']
-        request_user = request.POST['rfidTag']
-        
+
+        try:
+            data = json.loads(request.body)
+            request_hashed_password = data['password']
+            request_user = data['rfidTag']
+        except:
+            return HttpResponse("Malformed POST: " + request.body)
+                
         response = {}
         
         try:
@@ -98,9 +112,14 @@ def authorize_visitor(request):
         return index(request)
     
     elif request.method == 'POST':
-        request_user = request.POST['rfidTag']
-        request_visitor = request.POST['rfidTagVisitor']
 
+        try:
+            data = json.loads(request.body)
+            request_user = data['rfidTag']
+            request_visitor = data['rfidTagVisitor']
+        except:
+            return HttpResponse("Malformed POST: " + request.body)
+        
         response = {}
         
         try:

@@ -1,4 +1,5 @@
 from django.db import models
+from .errors import *
 
 ACCESS_LEVEL_CHOICES = (
 	(0, 'Visitor'),
@@ -30,13 +31,15 @@ class Room(models.Model):
 
 class Event(models.Model):
 	EVENT_TYPE_CHOICES = (
-    	(0, 'authorized'),
-    	(1, 'tag not found'),
-		(2, 'invalid password'),
-		(3, 'insufficient privileges'),
-		(4, 'open door timeout'),
-		(5, 'visitor tag not found'),
-		(-1, 'unknown error')
+    	(AUTHORIZED, 'Authorized'),
+    	(RFID_NOT_FOUND, 'RFID Tag not found'),
+		(INSUFFICIENT_PRIVILEGES, 'Insufficient privileges'),
+		(WRONG_PASSWORD, 'Invalid password'),
+		(PASSWORD_REQUIRED, 'Password required'),
+		(VISITOR_RFID_FOUND, 'Visitor card indentified'),
+		(VISITOR_RFID_NOT_FOUND, 'Visitor authorized'),
+		(OPEN_DOOR_TIMEOUT, 'Open door timeout'),
+		(UNKNOWN_ERROR, 'Unknown error')
 	)
 
 	READER_POSITION_CHOICES = (
@@ -49,3 +52,5 @@ class Event(models.Model):
 	date = models.DateTimeField('event occurred')
 	event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES)
 	reader_position = models.IntegerField(choices=READER_POSITION_CHOICES)
+	rfids = models.ArrayField(models.CharField(max_length=8, blank=True))
+
