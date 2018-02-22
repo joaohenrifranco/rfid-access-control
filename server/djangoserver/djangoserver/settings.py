@@ -25,7 +25,7 @@ SECRET_KEY = 'q$8^fv%je8w@6ta832gsv=q9h0-@v$t3rkq!=$ttbp%b5)wmcq'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.88.61', 'laspi-icp-01']
 
 
 # Application definition
