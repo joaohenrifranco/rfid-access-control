@@ -33,6 +33,7 @@ def request_unlock(request):
 		log.rfid = request_rfid_tag
 		log.reader_position = request_action
 		log.date = datetime.datetime.now()
+		log.api_module = UNLOCK_API
 
 		# Tries to get user and room from database with request info. Logs errors.
 		try:
@@ -111,27 +112,41 @@ def authenticate(request):
 		try:
 			data = json.loads(request.body)
 			request_hashed_password = data['password']
-			request_user = data['rfidTag']
+			request_rfid_tag = data['rfidTag']
 		except:
 			return HttpResponse("Malformed POST")
 				
 		response = {}
 
+		log = Event()
+		log.rfid = request_rfid_tag
+		log.date = datetime.datetime.now()
+		log.api_module = AUTH_API
 		
 		try:
-			user = User.objects.get(rfid_tag=request_user)
+			user = User.objects.get(rfid_tag=request_rfid_tag)
 		except User.DoesNotExist:
+			log.event_type = RFID_NOT_FOUND
+
 			response['status'] =  RFID_NOT_FOUND
 			return JsonResponse(response)
 		except:
+			log.event_type = UNKNOWN_ERROR
+
 			response['status'] = UNKNOWN_ERROR
 			return JsonResponse(response)
+		finally:
+			log.save()
 
 		if user.hashed_password != request_hashed_password:
+			log.event_type = WRONG_PASSWORD
 			response['status'] = WRONG_PASSWORD
 			return JsonResponse(response)
 
+		log.event_type = AUTHORIZED
+		
 		response['status'] = AUTHORIZED
+		
 		return JsonResponse(response)
 
 @csrf_exempt # Disables CSRF verification for this method
@@ -143,15 +158,20 @@ def authorize_visitor(request): ##TODO: MAKE AN ARRAY OF VISITOR TAGS
 
 		try:
 			data = json.loads(request.body)
-			request_user = data['rfidTag']
+			request_rfid_tag = data['rfidTag']
 			request_visitor = data['rfidTagVisitor']
 		except:
 			return HttpResponse("Malformed POST")
 		
 		response = {}
+
+		log = Event()
+		log.rfid = request_rfid_tag
+		log.date = datetime.datetime.now()
+		log.api_module = VISITOR_API
 		
 		try:
-			user = User.objects.get(rfid_tag=request_user)
+			user = User.objects.get(rfid_tag=request_rfid_tag)
 		except:
 			response['status'] = RFID_NOT_FOUND
 			return JsonResponse(response)
