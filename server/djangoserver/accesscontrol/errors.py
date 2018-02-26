@@ -1,3 +1,5 @@
+# Error codes used in the 'status' flag sent in POST response ans database logging
+
 UNKNOWN_ERROR = -1
 AUTHORIZED = 0
 RFID_NOT_FOUND = 1
@@ -10,3 +12,9 @@ VISITOR_RFID_NOT_FOUND = 7
 ROOM_NOT_FOUND = 8
 OPEN_DOOR_TIMEOUT = 9
 LOGGING_ERROR = 99
+
+# Used to store in the database where the event was logged
+
+UNLOCK_API = 0
+AUTH_API = 1
+VISITOR_API = 2

@@ -41,12 +41,17 @@ class Event(models.Model):
 		(OPEN_DOOR_TIMEOUT, 'Open door timeout'),
 		(UNKNOWN_ERROR, 'Unknown error'),
 		(ROOM_NOT_FOUND, 'Room not found'),
-		(LOGGING_ERROR, 'Logging error')
 	)
 
 	READER_POSITION_CHOICES = (
     	(0, 'outside'),
     	(1, 'inside'),
+	)
+
+	API_MODULE_CHOICES = (
+		(AUTH_API, '/api/authenticate/'),
+		(UNLOCK_API, '/api/request-unlock/'),
+		(VISITOR_API, '/api/authorize-visitor')
 	)
 
 	rfid = models.CharField(max_length=8, default=None, blank=True, null=True)
@@ -55,7 +60,7 @@ class Event(models.Model):
 	date = models.DateTimeField()
 	event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, default=LOGGING_ERROR)
 	reader_position = models.IntegerField(choices=READER_POSITION_CHOICES)
+	api_module = models.IntegerField(choices=API_MODULE_CHOICES)
 
 	def __str__(self):
 		return (self.date.strftime("%Y-%m-%d %H:%M:%S") + ": " + self.get_event_type_display())
-
