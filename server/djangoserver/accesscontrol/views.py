@@ -41,7 +41,7 @@ def request_unlock(request):
 		except Room.DoesNotExist:
 			log.event_type = ROOM_NOT_FOUND
 			response['status'] =  ROOM_NOT_FOUND
-			print("ROOM NOT FOUND")
+			
 			return JsonResponse(response)
 		except User.DoesNotExist:
 			log.event_type = RFID_NOT_FOUND
@@ -53,10 +53,8 @@ def request_unlock(request):
 			response['status'] = UNKNOWN_ERROR
 			return JsonResponse(response)
 		finally:
-			print("FINALLY")
 			log.save()
 
-		print("FOLLOWS")
 		
 		# Now a user and a room can be attributted to the log
 		log.room = room
