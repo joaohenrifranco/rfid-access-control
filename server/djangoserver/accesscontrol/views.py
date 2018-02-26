@@ -26,7 +26,7 @@ def request_unlock(request):
 			request_room_id = data['roomId']
 			request_action = data['action']
 		except:
-			return HttpResponse("Malformed POST: " + request.body)
+			return HttpResponse("Malformed POST")
 
 		response = {}
 		log = Event()
@@ -41,7 +41,7 @@ def request_unlock(request):
 		except Room.DoesNotExist:
 			log.event_type = ROOM_NOT_FOUND
 			response['status'] =  ROOM_NOT_FOUND
-			
+	
 			return JsonResponse(response)
 		except User.DoesNotExist:
 			log.event_type = RFID_NOT_FOUND
@@ -113,9 +113,10 @@ def authenticate(request):
 			request_hashed_password = data['password']
 			request_user = data['rfidTag']
 		except:
-			return HttpResponse("Malformed POST: " + request.body)
+			return HttpResponse("Malformed POST")
 				
 		response = {}
+
 		
 		try:
 			user = User.objects.get(rfid_tag=request_user)
@@ -145,7 +146,7 @@ def authorize_visitor(request): ##TODO: MAKE AN ARRAY OF VISITOR TAGS
 			request_user = data['rfidTag']
 			request_visitor = data['rfidTagVisitor']
 		except:
-			return HttpResponse("Malformed POST: " + request.body)
+			return HttpResponse("Malformed POST")
 		
 		response = {}
 		
