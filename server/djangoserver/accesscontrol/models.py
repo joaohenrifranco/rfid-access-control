@@ -39,7 +39,9 @@ class Event(models.Model):
 		(VISITOR_RFID_FOUND, 'Visitor card indentified'),
 		(VISITOR_RFID_NOT_FOUND, 'Visitor authorized'),
 		(OPEN_DOOR_TIMEOUT, 'Open door timeout'),
-		(UNKNOWN_ERROR, 'Unknown error')
+		(UNKNOWN_ERROR, 'Unknown error'),
+		(ROOM_NOT_FOUND, 'Room not found'),
+		(LOGGING_ERROR, 'Logging error')
 	)
 
 	READER_POSITION_CHOICES = (
@@ -47,10 +49,13 @@ class Event(models.Model):
     	(1, 'inside'),
 	)
 
-	user = models.ForeignKey(User, on_delete=models.PROTECT)
-	room = models.ForeignKey(Room, on_delete=models.PROTECT)
-	date = models.DateTimeField('event occurred')
-	event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES)
+	rfid = models.CharField(max_length=8, default=None, blank=True, null=True)
+	user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, blank=True, null=True)
+	room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True)
+	date = models.DateTimeField()
+	event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, default=LOGGING_ERROR)
 	reader_position = models.IntegerField(choices=READER_POSITION_CHOICES)
-#	rfids = models.ArrayField(models.CharField(max_length=8, blank=True))
+
+	def __str__(self):
+		return (self.date.strftime("%Y-%m-%d %H:%M:%S") + ": " + self.get_event_type_display())
 
