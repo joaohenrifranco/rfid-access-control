@@ -156,20 +156,37 @@ def authorize_visitor(request): ##TODO: MAKE AN ARRAY OF VISITOR TAGS
 	
 	elif request.method == 'POST':
 
+		request_visitor_array = []
 		try:
 			data = json.loads(request.body)
 			request_rfid_tag = data['rfidTag']
-			request_visitor = data['rfidTagVisitor']
+			request_visitor_array = data['rfidTagsVisitors']
+			request_room_id = data['roomId']
 		except:
 			return HttpResponse("Malformed POST")
-		
+
 		response = {}
 
 		log = Event()
 		log.rfid = request_rfid_tag
 		log.date = datetime.datetime.now()
+		log.reader_position = 0
 		log.api_module = VISITOR_API
-		
+
+		try:
+			log.room = Room.objects.get(name=request_room_id)
+			log.user = User.objects.get(rfid_tag=request_rfid_tag)
+		except User.DoesNotExist:
+			log.event_type = RFID_NOT_FOUND
+
+			response['status'] =  RFID_NOT_FOUND
+			return JsonResponse(response)
+		except:
+			log.event_type = ROOM_NOT_FOUND
+			response['status'] =  ROOM_NOT_FOUND
+	
+			return JsonResponse(response)
+
 		try:
 			user = User.objects.get(rfid_tag=request_rfid_tag)
 		except:
@@ -180,11 +197,25 @@ def authorize_visitor(request): ##TODO: MAKE AN ARRAY OF VISITOR TAGS
 			response['status'] = INSUFFICIENT_PRIVILEGES
 			return JsonResponse(response)
 
-		try:
-			visitor = User.objects.get(rfid_tag=request_visitor)
-		except:
-			response['status'] = RFID_NOT_FOUND
-			return JsonResponse(response)
+		visitor_list = []
 
+
+
+		for visitor_rfid in request_visitor_array:
+			try:
+				visitor_list.append(User.objects.get(rfid_tag=visitor_rfid))
+				
+			except:
+				log.event_type = VISITOR_RFID_NOT_FOUND
+				log.save()
+
+				response['status'] = VISITOR_RFID_NOT_FOUND
+				return JsonResponse(response)
+
+		log.save()
+		log.event_type = VISITOR_AUTHORIZED
+		log.visitors.add(*visitor_list)
+		log.save()
+		
 		response['status'] = VISITOR_AUTHORIZED
 		return JsonResponse(response)

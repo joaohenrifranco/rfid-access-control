@@ -37,6 +37,7 @@ class Event(models.Model):
 		(WRONG_PASSWORD, 'Invalid password'),
 		(PASSWORD_REQUIRED, 'Password required'),
 		(VISITOR_RFID_FOUND, 'Visitor card indentified'),
+		(VISITOR_AUTHORIZED, 'Visitor authorized'),
 		(VISITOR_RFID_NOT_FOUND, 'Visitor authorized'),
 		(OPEN_DOOR_TIMEOUT, 'Open door timeout'),
 		(UNKNOWN_ERROR, 'Unknown error'),
@@ -44,8 +45,8 @@ class Event(models.Model):
 	)
 
 	READER_POSITION_CHOICES = (
-    	(0, 'outside'),
-    	(1, 'inside'),
+    	(0, 'Outside'),
+    	(1, 'Inside'),
 	)
 
 	API_MODULE_CHOICES = (
@@ -54,13 +55,21 @@ class Event(models.Model):
 		(VISITOR_API, '/api/authorize-visitor')
 	)
 
-	rfid = models.CharField(max_length=8, default=None, blank=True, null=True)
-	user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, blank=True, null=True)
-	room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True)
-	date = models.DateTimeField()
+	user = models.ForeignKey(
+		User, on_delete=models.PROTECT, 
+		default=None, blank=True, 
+		null=True, 
+		related_name='employee'
+		)
+	
 	event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, default=LOGGING_ERROR)
 	reader_position = models.IntegerField(choices=READER_POSITION_CHOICES)
-	api_module = models.IntegerField(choices=API_MODULE_CHOICES)
+	api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None, null=True)
+	rfid = models.CharField(max_length=8, default=None, blank=True, null=True)
+
+	room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True)
+	date = models.DateTimeField()
+	visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True)
 
 	def __str__(self):
-		return (self.date.strftime("%Y-%m-%d %H:%M:%S") + ": " + self.get_event_type_display())
+		return (self.date.strftime("%Y-%m-%d %H:%M:%S") + ": ")
