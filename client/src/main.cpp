@@ -67,19 +67,23 @@ byte WHITE [] =								{HIGH, HIGH, HIGH};
 /*
  *  Pins
  */
-#define PIN_SENSOR							20
-#define PIN_BUZZER							21
-#define RST_PIN           					49
-#define LED_IN_R          					27
-#define LED_IN_G          					29
-#define LED_IN_B          					31
-#define LED_OUT_R         					26
-#define LED_OUT_G         					28
-#define LED_OUT_B         					30
-#define KEYPAD_LIN_PINS   					{33, 35, 37, 39}
-#define KEYPAD_COL_PINS   					{41, 43, 45}
-const byte SS_PIN_INSIDE = 					44;
-const byte SS_PIN_OUTSIDE = 				48;
+#define LED_IN_R							A0
+#define LED_IN_G							A1
+#define LED_IN_B							A2
+#define LED_OUT_R							A3
+#define LED_OUT_G							A4
+#define LED_OUT_B							A5
+#define PIN_SENSOR							A6
+#define PIN_BUZZER							A7
+const byte SS_PIN_INSIDE = 					0;
+const byte SS_PIN_OUTSIDE = 				1;
+#define RST_PIN								2
+#define KEYPAD_LIN_PINS						{3, 4, 5, 6}
+#define KEYPAD_COL_PINS						{7, 8, 9}
+#define SS_PIN_ETHERNET						10
+#define MOSI_PIN							11
+#define MISO_PIN							12
+#define SCK_PIN								13
 
 /*
  *  Declaring the RFID modules
