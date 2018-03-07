@@ -149,11 +149,11 @@ void WriteRGB (byte color[], char inside_outside)
 String UID_toStr (byte *buffer, byte bufferSize)
 {
 	String aux = "";
-  for (byte i = 0; i < bufferSize; i++)
+  	for (byte i = 0; i < bufferSize; i++)
 	{
-    aux.concat(String(buffer[i] < 0x10 ? "0" : ""));
-    aux.concat(String(buffer[i], HEX));
-  }
+		aux.concat(String(buffer[i] < 0x10 ? "0" : ""));
+		aux.concat(String(buffer[i], HEX));
+  	}
 	return aux;
 }
 
@@ -172,18 +172,18 @@ String UID_toStr (byte *buffer, byte bufferSize)
 String ReadRFIDTags (char *entering_or_leaving)
 {
 	*entering_or_leaving = 255;
-  String aux = "";
-  for (byte i = 0; i < NUM_READERS; i++)
+  	String aux = "";
+  	for (byte i = 0; i < NUM_READERS; i++)
 	{
 		aux = "";
-	if (readers[i].PICC_IsNewCardPresent() && readers[i].PICC_ReadCardSerial())
-	{
-		aux = UID_toStr(readers[i].uid.uidByte, readers[i].uid.size);
-		*entering_or_leaving = i;
-	}
+		if (readers[i].PICC_IsNewCardPresent() && readers[i].PICC_ReadCardSerial())
+		{
+			aux = UID_toStr(readers[i].uid.uidByte, readers[i].uid.size);
+			*entering_or_leaving = i;
+		}
 		if (aux != "")
 			return aux;
-  }
+  	}
 	return aux;
 }
 
@@ -206,6 +206,7 @@ String GetPassword ()
 	char c = keyPad.getKey();
 	while (c != END_OF_PASSWORD)
 	{
+		BlinkRGB(1, 75, BLACK, DO_SOMETHING_COLOR, 'o');
 		if (c == QUIT_TYPING)
 			return "";
 		if (c)
@@ -537,6 +538,33 @@ void UnlockDoor (void)
 }
 
 /*
+ *	void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char action);
+ *
+ *  Description:
+ *  - Blinks RGB LED in "action" from "blink_color" to "end_color" "n_times" times within a "delay_time" time
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] byte n_times: number of times the LED will blink
+ * 	[INPUT] byte delay_time: time between blinks
+ *  [INPUT] byte blink_color []: the LED color when blinking
+ *  [INPUT] byte end_color []: the LED color when it ends
+ *  [INPUT] char action: which LED should blink
+ *
+ *  Returns:
+ *  -
+ */
+void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char action)
+{
+	for (byte i = 0; i < n_times; i ++)
+	{
+		WriteRGB(blink_color, action);
+		delay(delay_time);
+		WriteRGB(end_color, action);
+		delay(delay_time);
+	}
+}
+
+/*
  *  Setup
  */
 void setup() 
@@ -585,18 +613,6 @@ void setup()
 	Serial.println();
 	Serial.println("-- Setting buzzer pin as output...");
 	pinMode(PIN_BUZZER, OUTPUT);
-
-	// Serial.println("Starting");
-	// String rfidTagsVisitors [] = {"ABC", "DEF", "GHI", "JKL"};
-	// String rfidTag = "MNO";
-
-	// Serial.println(GenerateVisitorPostData(rfidTag, rfidTagsVisitors));
-	// delay (2000);
-
-	// // Prints messages indicating that all setup has been done
-	// Serial.println();
-	// Serial.println("=== All setup is done!");
-	// Serial.println();
 }
 
 /*
@@ -604,174 +620,155 @@ void setup()
  */
 void loop() 
 {
-	/*
-	String tag = "";
-	tag = ReadRFIDTags();
-	while (tag == "")
-	{
-		Serial.println("Approach your card");
-		delay(500);
-		tag = ReadRFIDTags();
-	}
-	Serial.print("Card tag: ");
-	Serial.println(tag);
-	String pw = GetPassword();
-	Serial.print("Password: ");
-	Serial.println(pw);
-	String hashed = HashedPassword(pw);
-	Serial.print("Hashed: ");
-	Serial.println(hashed);
-	*/
-
-	// /*  Full code for Arduino Client (still in development) */
-	// String pw = "";
+	// char entering_or_leaving = 'i';
 	// String tag = "";
-	// byte status = 255;
-	// String hashed = "";
-	// String output = "";
-	// char action = 'z';
-	// char not_action = 'z';
-	// String postData = "";
-	// String tagsArray [MAX_VISITOR_NUM];
-	// char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
-
-	// // Resets the tagsArray
-	// for (byte i = 0; i < MAX_VISITOR_NUM; i++)
-	// 	tagsArray[i] = "";
-
-	// // Standby mode
-	// WriteRGB(STANDBY_COLOR, 'i');
-	// WriteRGB(STANDBY_COLOR, 'o');
-	// // Starts to read
-	// Serial.println("=== Starting to read...");
 	// tag = ReadRFIDTags(&entering_or_leaving);
 	// while (tag == "")
 	// {
-	// 	Serial.println("-- Reading...");
-	// 	delay (50);
+	// 	Serial.println("Approach your card");
+	// 	delay(500);
 	// 	tag = ReadRFIDTags(&entering_or_leaving);
 	// }
-	// Serial.print("UID Tag: ");
+	// Serial.print("Card tag: ");
 	// Serial.println(tag);
-	// // Found an UID. Turns one side to WAITING_MODE and the other to BLOCKED_MODE
-	// if (entering_or_leaving == 0)
-	// {
-	// 	action = 'o';
-	// 	not_action = 'i';
-	// 	Serial.println("-- User in ENTERING the room");
-	// }
-	// else
-	// {
-	// 	action = 'i';
-	// 	not_action = 'o';
-	// 	Serial.println("-- User in LEAVING the room");
-	// }
-	// WriteRGB(WAITING_COLOR, action);
-	// WriteRGB(ERROR_COLOR, not_action);
-	// // Generates POST data
-	// Serial.println("-- Generating POST data...");
-	// postData = GenerateUnlockPostData (tag, WHO_AM_I, entering_or_leaving);
-	// Serial.println(postData);
-	// // Sends request to REQUEST_UNLOCK and gets response
-	// output = SendPostRequest(postData, REQUEST_UNLOCK);
-	// Serial.print ("-- Server response: ");
-	// Serial.println(output);
-	// // Parse response's status
-	// status = ParseResponse(output);
-	// Serial.print("-- Status: ");
-	// Serial.println(status);
-	// // If already authorized, unlocks door
-	// if (status == AUTHORIZED)
-	// {
-	// 	UnlockDoor();
-	// 	WriteRGB(OK_COLOR, action);
-	// 	//
-	// 	//
-	// 	//	REMOVE DELAY (or reduce it)
-	// 	//
-	// 	//
-	// 	delay(5000);
-	// }
-	// // If needs password, blinks OK_COLOR and asks for typing
-	// else if (status == PASSWORD_REQUIRED)
-	// {
-	// 	for (byte i = 0; i < 2; i ++)
-	// 	{
-	// 		WriteRGB(DO_SOMETHING_COLOR, action);
-	// 		delay(250);
-	// 		WriteRGB(BLACK, action);
-	// 		delay(250);
-	// 	}
-	// 	WriteRGB(DO_SOMETHING_COLOR, action);
-	// 	Serial.println("-- Waiting for password...");
-	// 	// Gets password
-	// 	pw = GetPassword();
-	// 	Serial.print("-- Password: ");
-	// 	Serial.println(pw);
-	// 	// Blinks WAITING_COLOR once password is read
-	// 	for (byte i = 0; i < 2; i ++)
-	// 	{
-	// 		WriteRGB(BLACK, action);
-	// 		delay(250);
-	// 		WriteRGB(WAITING_COLOR, action);
-	// 		delay(250);
-	// 	}
-	// 	// Hashes password
-	// 	Serial.println("-- Hashing password...");
-	// 	hashed = HashedPassword(pw);
-	// 	Serial.print("-- Hashed password (SHA-256): ");
-	// 	Serial.println(hashed);
-	// 	// Generates POST data for AUTHENTICATE API
-	// 	Serial.println("-- Generating POST data...");
-	// 	postData = GenerateAuthenticatePostData(tag, hashed);
-	// 	Serial.println(postData);
-	// 	// Sends POST data to AUTHENTICATE API
-	// 	output = SendPostRequest(postData, AUTHENTICATE);
-	// 	Serial.print ("-- Server response: ");
-	// 	Serial.println(output);
-	// 	// Parse response's status
-	// 	status = ParseResponse(output);
-	// 	Serial.print("-- Status: ");
-	// 	Serial.println(status);
-	// 	// If authorized
-	// 	if (status == AUTHORIZED)
-	// 	{
-	// 		// Checks if there's any visitor on tagsArray
-	// 		if (tagsArray[0] == "")
-	// 		{
-	// 			UnlockDoor();
-	// 			WriteRGB(OK_COLOR, action);
-	// 			//
-	// 			//
-	// 			//	REMOVE DELAY (or reduce it)
-	// 			//
-	// 			//
-	// 			delay(5000);
-	// 		}
-	// 		// If there are visitor tags
-	// 		else
-	// 		{
-	// 			//
-	// 			//	TODO: Generates POST for AUTHORIZE_VISITOR, gets response and unlocks door.
-	// 			//
-	// 		}
-	// 	}
-	// 	else
-	// 	{
-	// 		WriteRGB(ERROR_COLOR, action);
-	// 		delay (5000);
-	// 	}
-	// }
-	// else if (status == VISITOR_RFID_FOUND)
-	// {
-	// 	//
-	// 	// TODO: Appends visitors' UID to tagsArray until UID belongs to employee.
-	// 	//
-	// }
-	// else
-	// {
-	// 	WriteRGB(ERROR_COLOR, action);
-	// 	delay (5000);
-	// }
-	// //while(true);
+
+	/*  Full code for Arduino Client (still in development) */
+	String pw = "";
+	String tag = "";
+	byte status = 255;
+	String hashed = "";
+	String output = "";
+	char action = 'z';
+	char not_action = 'z';
+	String postData = "";
+	String tagsArray [MAX_VISITOR_NUM];
+	char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
+
+	// Resets the tagsArray
+	for (byte i = 0; i < MAX_VISITOR_NUM; i++)
+		tagsArray[i] = "";
+
+	// Standby mode
+	WriteRGB(STANDBY_COLOR, 'i');
+	WriteRGB(STANDBY_COLOR, 'o');
+	// Starts to read
+	Serial.println("=== Starting to read...");
+	tag = ReadRFIDTags(&entering_or_leaving);
+	while (tag == "")
+	{
+		Serial.println("-- Reading...");
+		delay (50);
+		tag = ReadRFIDTags(&entering_or_leaving);
+	}
+	Serial.print("UID Tag: ");
+	Serial.println(tag);
+	// Found an UID. Turns one side to WAITING_MODE and the other to BLOCKED_MODE
+	if (entering_or_leaving == 0)
+	{
+		action = 'o';
+		not_action = 'i';
+		Serial.println("-- User in ENTERING the room");
+	}
+	else
+	{
+		action = 'i';
+		not_action = 'o';
+		Serial.println("-- User in LEAVING the room");
+	}
+	WriteRGB(WAITING_COLOR, action);
+	WriteRGB(ERROR_COLOR, not_action);
+	// Generates POST data
+	Serial.println("-- Generating POST data...");
+	postData = GenerateUnlockPostData (tag, WHO_AM_I, entering_or_leaving);
+	Serial.println(postData);
+	// Sends request to REQUEST_UNLOCK and gets response
+	output = SendPostRequest(postData, REQUEST_UNLOCK);
+	Serial.print ("-- Server response: ");
+	Serial.println(output);
+	// Parse response's status
+	status = ParseResponse(output);
+	Serial.print("-- Status: ");
+	Serial.println(status);
+	// If already authorized, unlocks door
+	if (status == AUTHORIZED)
+	{
+		UnlockDoor();
+		WriteRGB(OK_COLOR, action);
+		//
+		//
+		//	REMOVE DELAY (or reduce it)
+		//
+		//
+		delay(5000);
+	}
+	// If needs password, blinks OK_COLOR and asks for typing
+	else if (status == PASSWORD_REQUIRED)
+	{
+		// Blinks DO_SOMETHING_COLOR
+		BlinkRGB(2, 250, BLACK, DO_SOMETHING_COLOR, action);
+		Serial.println("-- Waiting for password...");
+		// Gets password
+		pw = GetPassword();
+		Serial.print("-- Password: ");
+		Serial.println(pw);
+		// Blinks WAITING_COLOR once password is read
+		BlinkRGB(2, 250, BLACK, WAITING_COLOR, action);
+		// Hashes password
+		Serial.println("-- Hashing password...");
+		hashed = HashedPassword(pw);
+		Serial.print("-- Hashed password (SHA-256): ");
+		Serial.println(hashed);
+		// Generates POST data for AUTHENTICATE API
+		Serial.println("-- Generating POST data...");
+		postData = GenerateAuthenticatePostData(tag, hashed);
+		Serial.println(postData);
+		// Sends POST data to AUTHENTICATE API
+		output = SendPostRequest(postData, AUTHENTICATE);
+		Serial.print ("-- Server response: ");
+		Serial.println(output);
+		// Parse response's status
+		status = ParseResponse(output);
+		Serial.print("-- Status: ");
+		Serial.println(status);
+		// If authorized
+		if (status == AUTHORIZED)
+		{
+			// Checks if there's any visitor on tagsArray
+			if (tagsArray[0] == "")
+			{
+				UnlockDoor();
+				WriteRGB(OK_COLOR, action);
+				//
+				//
+				//	REMOVE DELAY (or reduce it)
+				//
+				//
+				delay(5000);
+			}
+			// If there are visitor tags
+			else
+			{
+				//
+				//	TODO: Generates POST for AUTHORIZE_VISITOR, gets response and unlocks door.
+				//
+			}
+		}
+		else
+		{
+			WriteRGB(ERROR_COLOR, action);
+			delay (5000);
+		}
+	}
+	else if (status == VISITOR_RFID_FOUND)
+	{
+		//
+		// TODO: Appends visitors' UID to tagsArray until UID belongs to employee.
+		//
+	}
+	else
+	{
+		WriteRGB(ERROR_COLOR, action);
+		delay (5000);
+	}
+	//while(true);
 }
