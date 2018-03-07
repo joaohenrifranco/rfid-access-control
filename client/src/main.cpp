@@ -138,6 +138,33 @@ void WriteRGB (byte color[], char inside_outside)
 }
 
 /*
+ *	void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char action);
+ *
+ *  Description:
+ *  - Blinks RGB LED in "action" from "blink_color" to "end_color" "n_times" times within a "delay_time" time
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] byte n_times: number of times the LED will blink
+ * 	[INPUT] byte delay_time: time between blinks
+ *  [INPUT] byte blink_color []: the LED color when blinking
+ *  [INPUT] byte end_color []: the LED color when it ends
+ *  [INPUT] char action: which LED should blink
+ *
+ *  Returns:
+ *  -
+ */
+void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char action)
+{
+	for (byte i = 0; i < n_times; i ++)
+	{
+		WriteRGB(blink_color, action);
+		delay(delay_time);
+		WriteRGB(end_color, action);
+		delay(delay_time);
+	}
+}
+
+/*
  *  String UID_toStr (byte *buffer, byte bufferSize);
  *
  *  Description:
@@ -539,33 +566,6 @@ void OperateBuzzer ()
 void UnlockDoor (void)
 {
 	//	TODO
-}
-
-/*
- *	void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char action);
- *
- *  Description:
- *  - Blinks RGB LED in "action" from "blink_color" to "end_color" "n_times" times within a "delay_time" time
- *
- *  Inputs/Outputs:
- *  [INPUT] byte n_times: number of times the LED will blink
- * 	[INPUT] byte delay_time: time between blinks
- *  [INPUT] byte blink_color []: the LED color when blinking
- *  [INPUT] byte end_color []: the LED color when it ends
- *  [INPUT] char action: which LED should blink
- *
- *  Returns:
- *  -
- */
-void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char action)
-{
-	for (byte i = 0; i < n_times; i ++)
-	{
-		WriteRGB(blink_color, action);
-		delay(delay_time);
-		WriteRGB(end_color, action);
-		delay(delay_time);
-	}
 }
 
 /*
