@@ -23,7 +23,7 @@
 #define DOOR_TIMEOUT						15000
 #define MAX_VISITOR_NUM						20
 #define SERIAL_SPEED      					9600
-#define MAC_ADDRESS       					{0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED} 	// Change MAC for individual modules
+#define MAC_ADDRESS       					{0x1D, 0xAE, 0x9B, 0x21, 0x8B, 0x31} 	// Change MAC for individual modules
 #define SERVER_IP         					{192, 168, 88, 64}
 #define REQUEST_UNLOCK    					"/api/request-unlock"
 #define AUTHENTICATE      					"/api/authenticate"
@@ -75,12 +75,12 @@ byte WHITE [] =								{HIGH, HIGH, HIGH};
 #define LED_OUT_B							A5
 #define PIN_SENSOR							A6
 #define PIN_BUZZER							A7
-const byte SS_PIN_INSIDE = 					0;
-const byte SS_PIN_OUTSIDE = 				1;
-#define RST_PIN								2
+const byte SS_PIN_INSIDE = 					9;
+const byte SS_PIN_OUTSIDE = 				8;
+#define RST_PIN								10
 #define KEYPAD_LIN_PINS						{3, 4, 5, 6}
-#define KEYPAD_COL_PINS						{7, 8, 9}
-#define SS_PIN_ETHERNET						10
+#define KEYPAD_COL_PINS						{7, 0, 1}
+#define SS_PIN_ETHERNET						2
 #define MOSI_PIN							11
 #define MISO_PIN							12
 #define SCK_PIN								13
@@ -202,10 +202,14 @@ String UID_toStr (byte *buffer, byte bufferSize)
  */
 String ReadRFIDTags (char *entering_or_leaving)
 {
+	digitalWrite(SS_PIN_ETHERNET, HIGH);
 	*entering_or_leaving = 255;
   	String aux = "";
   	for (byte i = 0; i < NUM_READERS; i++)
 	{
+		digitalWrite(SS_PIN_INSIDE, HIGH);
+		digitalWrite(SS_PIN_OUTSIDE, HIGH);
+		digitalWrite(ssPins[i], LOW);
 		aux = "";
 		if (readers[i].PICC_IsNewCardPresent() && readers[i].PICC_ReadCardSerial())
 		{
@@ -389,6 +393,9 @@ String GenerateVisitorPostData (String rfidTag, String rfidTagsVisitors [])
  */
 String SendPostRequest(String postData, String requestFrom)
 {
+	digitalWrite(SS_PIN_ETHERNET, LOW);
+	digitalWrite(SS_PIN_OUTSIDE, HIGH);
+	digitalWrite(SS_PIN_INSIDE, HIGH);
 	String output = "";
 	IPAddress serverIP(SERVER_IP);
 	IPAddress myIP(Ethernet.localIP());
@@ -577,10 +584,26 @@ void setup()
 	Serial.begin(SERIAL_SPEED);
 	Serial.println();
 	Serial.println("=== Beginning Setup...");
+	// Initializes SPI Slave Select pins
+	Serial.println();
+	Serial.println("-- Setting SPI SS pins...");
+	pinMode(SS_PIN_INSIDE, OUTPUT);
+	pinMode(SS_PIN_ETHERNET, OUTPUT);
+	pinMode(SS_PIN_OUTSIDE, OUTPUT);
+	pinMode(10, OUTPUT);
+	pinMode(4, OUTPUT);
+	pinMode(RST_PIN, OUTPUT);
+	digitalWrite(RST_PIN, LOW);
+	digitalWrite(4, HIGH);
+	digitalWrite(10, HIGH);
+	digitalWrite(SS_PIN_INSIDE, HIGH);
+	digitalWrite(SS_PIN_OUTSIDE, HIGH);
+	digitalWrite(SS_PIN_ETHERNET, HIGH);
 	// Starts SPI communication for devices
 	Serial.println();
 	Serial.println("-- Starting SPI...");
 	SPI.begin();
+	delayMicroseconds(500);
 	// Initializes LED pins as output
 	Serial.println();
 	Serial.println("-- Setting LEDs pins as output...");
@@ -591,32 +614,44 @@ void setup()
 	pinMode(LED_OUT_G, OUTPUT);
 	pinMode(LED_OUT_B, OUTPUT);
 	// Initializes the RFID modules
-	Serial.println();
-	Serial.println("-- Initializing RFID modules...");
-	for (byte i = 0; i < NUM_READERS; i++)
-	{
-		readers[i].PCD_Init(ssPins[i], RST_PIN);
-	Serial.print("Reader ");
-	Serial.print(i + 1);
-		Serial.print(" initialized!\tVersion: ");
-		readers[i].PCD_DumpVersionToSerial();
-	}	
+	// Serial.println();
+	// Serial.println("-- Initializing RFID modules...");
+	// digitalWrite(SS_PIN_ETHERNET, HIGH);
+	// for (byte i = 0; i < NUM_READERS; i++)
+	// {
+	// 	digitalWrite(SS_PIN_INSIDE, HIGH);
+	// 	digitalWrite(SS_PIN_OUTSIDE, HIGH);
+	// 	digitalWrite(ssPins[i], LOW);
+	// 	readers[i].PCD_Init(ssPins[i], RST_PIN);
+	// 	Serial.print("Reader ");
+	// 	Serial.print(i + 1);
+	// 	Serial.print(" initialized!\tVersion: ");
+	// 	readers[i].PCD_DumpVersionToSerial();
+	// }	
 	// Initializes the Ethernet module
 	Serial.println();
 	Serial.println("-- Initializing Ethernet module...");
-	Ethernet.begin(mac);
+	digitalWrite(SS_PIN_INSIDE, HIGH);
+	digitalWrite(SS_PIN_OUTSIDE, HIGH);
+	digitalWrite(SS_PIN_ETHERNET, LOW);
+	byte IP [] = {192, 168, 88, 120};
+	Ethernet.begin(mac, IP);
+	delay(800);
+	Serial.print("- My MAC: ");
+	Serial.print(mac[0], HEX); Serial.print(":"); Serial.print(mac[1], HEX); Serial.print(":");
+	Serial.print(mac[2], HEX); Serial.print(":"); Serial.print(mac[3], HEX); Serial.print(":");
+	Serial.print(mac[4], HEX); Serial.print(":"); Serial.print(mac[5], HEX); Serial.println();
 	Serial.print("- My IP: ");
 	Serial.println(Ethernet.localIP());
-
 	// Initializes the sensor
 	Serial.println();
 	Serial.println("-- Setting sensor pin as input...");
 	pinMode(PIN_SENSOR, INPUT);
-
 	// Initializes the buzzer
 	Serial.println();
 	Serial.println("-- Setting buzzer pin as output...");
 	pinMode(PIN_BUZZER, OUTPUT);
+	while(true);
 }
 
 /*
