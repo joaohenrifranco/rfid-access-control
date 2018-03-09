@@ -1,7 +1,5 @@
 /*
- *
- *  This code is being compiled for Arduino Pro Mini 16MHz
- *
+ *  This code is compatible with Arduino Pro Mini 16MHz
  */
 
 /*
@@ -18,12 +16,12 @@
 /*
  *  Macros
  */
-#define WHO_AM_I							"corredor"
-#define MEASURE_NUMBERS						10
-#define DOOR_TIMEOUT						15000
-#define MAX_VISITOR_NUM						20
-#define SERIAL_SPEED      					9600
-#define MAC_ADDRESS       					{0x1D, 0xAE, 0x9B, 0x21, 0x8B, 0x31} 	// Change MAC for individual modules
+#define WHO_AM_I              "corredor"
+#define MEASURE_NUMBERS       10
+#define DOOR_TIMEOUT          15000
+#define MAX_VISITOR_NUM       20
+#define SERIAL_SPEED          9600
+#define MAC_ADDRESS       					{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
 #define SERVER_IP         					{192, 168, 88, 64}
 #define REQUEST_UNLOCK    					"/api/request-unlock"
 #define AUTHENTICATE      					"/api/authenticate"
@@ -35,55 +33,64 @@
 #define END_OF_PASSWORD   					'#'
 #define QUIT_TYPING       					'*'
 #define NUM_READERS       					2
-byte BLACK [] =								{0, 0, 0};								//Turn LED off
-byte BLUE [] =								{0, 0, HIGH};
-byte GREEN [] =								{0, HIGH, 0};
-byte AQUA [] =								{0, HIGH, HIGH};						//Light blue
-byte RED [] =								{HIGH, 0, 0};
-byte FUCHSIA [] =							{HIGH, 0, HIGH};						//Kinda purple
-byte YELLOW [] =							{HIGH, HIGH, 0};
-byte WHITE [] =								{HIGH, HIGH, HIGH};
-#define WAITING_COLOR						YELLOW
-#define OK_COLOR							GREEN
-#define ERROR_COLOR							RED
-#define STANDBY_COLOR						WHITE
+byte BLACK [] =											{0, 0, 0};								//Turn LED off
+byte BLUE [] =											{0, 0, HIGH};
+byte GREEN [] =											{0, HIGH, 0};
+byte AQUA [] =											{0, HIGH, HIGH};						//Light blue
+byte RED [] =												{HIGH, 0, 0};
+byte FUCHSIA [] =										{HIGH, 0, HIGH};						//Kinda purple
+byte YELLOW [] =										{HIGH, HIGH, 0};
+byte WHITE [] =											{HIGH, HIGH, HIGH};
+#define WAITING_COLOR								YELLOW
+#define OK_COLOR										GREEN
+#define ERROR_COLOR									RED
+#define STANDBY_COLOR								WHITE
 #define DO_SOMETHING_COLOR					BLUE
 
 /*
  *	Server Error Codes
  */
-#define UNKNOWN_ERROR						-1
-#define AUTHORIZED							0
-#define RFID_NOT_FOUND						1
-#define INSUFFICIENT_PRIVILEGES				2
-#define WRONG_PASSWORD						3
-#define PASSWORD_REQUIRED					4
+#define UNKNOWN_ERROR								-1
+#define AUTHORIZED									0
+#define RFID_NOT_FOUND							1
+#define INSUFFICIENT_PRIVILEGES			2
+#define WRONG_PASSWORD							3
+#define PASSWORD_REQUIRED						4
 #define VISITOR_RFID_FOUND					5
 #define VISITOR_AUTHORIZED					6
-#define VISITOR_RFID_NOT_FOUND				7
-#define ROOM_NOT_FOUND						8
-#define OPEN_DOOR_TIMEOUT					9
+#define VISITOR_RFID_NOT_FOUND			7
+#define ROOM_NOT_FOUND							8
+#define OPEN_DOOR_TIMEOUT						9
 
 /*
  *  Pins
  */
-#define LED_IN_R							A0
-#define LED_IN_G							A1
-#define LED_IN_B							A2
-#define LED_OUT_R							A3
-#define LED_OUT_G							A4
-#define LED_OUT_B							A5
-#define PIN_SENSOR							A6
-#define PIN_BUZZER							A7
-const byte SS_PIN_INSIDE = 					9;
-const byte SS_PIN_OUTSIDE = 				8;
-#define RST_PIN								10
-#define KEYPAD_LIN_PINS						{3, 4, 5, 6}
-#define KEYPAD_COL_PINS						{7, 0, 1}
-#define SS_PIN_ETHERNET						2
-#define MOSI_PIN							11
-#define MISO_PIN							12
-#define SCK_PIN								13
+#define LED_IN_R										A0
+#define LED_IN_G										A1
+#define LED_IN_B										A2
+#define LED_OUT_R										A3
+#define LED_OUT_G										A4
+#define LED_OUT_B										A5
+#define PIN_SENSOR									A6
+#define PIN_BUZZER									A7
+#define RST_PIN											2
+#define KEYPAD_LIN_PINS							{3, 4, 5, 6}
+#define KEYPAD_COL_PINS							{7, 0, 1}
+
+// Macros for reference only
+#define MOSI_PIN										11
+#define MISO_PIN										12
+#define SCK_PIN											13
+
+const byte SS_PIN_INSIDE	= 				9;
+const byte SS_PIN_OUTSIDE	=					8;
+
+#define SS_PIN_ETHERNET 10
+
+#ifdef ETHERNET_SHIELD_SPI_CS
+	#undef ETHERNET_SHIELD_SPI_CS
+#endif
+#define ETHERNET_SHIELD_SPI_CS SS_PIN_ETHERNET
 
 /*
  *  Declaring the RFID modules
@@ -94,11 +101,12 @@ MFRC522 readers [NUM_READERS];
 /*
  *  Declaring IP, MAC and the ethernet client itself
  */
-#if defined(WIZ550io_WITH_MACADDRESS)
-;
-#else
+// TODO: FIX AUTOMATIC MAC, FOLLOWING COMMENTED LINES CRASH ETHERNET
+// #if defined(WIZ550io_WITH_MACADDRESS)
+// ;
+// #else
 byte mac[] = MAC_ADDRESS;
-#endif
+
 EthernetClient ethClient;
 
 /*
@@ -546,7 +554,7 @@ void OperateBuzzer ()
 	}
 	else
 	{
-		long initial_timer = millis();
+		unsigned long initial_timer = millis();
 		while (opened == true)
 		{
 			if (millis() >= initial_timer + DOOR_TIMEOUT)
@@ -581,77 +589,64 @@ void UnlockDoor (void)
 void setup() 
 {
 	// Starts serial communication for debugging purposes
+	
 	Serial.begin(SERIAL_SPEED);
-	Serial.println();
+	
 	Serial.println("=== Beginning Setup...");
-	// Initializes SPI Slave Select pins
-	Serial.println();
 	Serial.println("-- Setting SPI SS pins...");
+	
 	pinMode(SS_PIN_INSIDE, OUTPUT);
-	pinMode(SS_PIN_ETHERNET, OUTPUT);
 	pinMode(SS_PIN_OUTSIDE, OUTPUT);
-	pinMode(10, OUTPUT);
-	pinMode(4, OUTPUT);
-	pinMode(RST_PIN, OUTPUT);
-	digitalWrite(RST_PIN, LOW);
-	digitalWrite(4, HIGH);
-	digitalWrite(10, HIGH);
-	digitalWrite(SS_PIN_INSIDE, HIGH);
-	digitalWrite(SS_PIN_OUTSIDE, HIGH);
-	digitalWrite(SS_PIN_ETHERNET, HIGH);
-	// Starts SPI communication for devices
-	Serial.println();
-	Serial.println("-- Starting SPI...");
-	SPI.begin();
-	delayMicroseconds(500);
-	// Initializes LED pins as output
-	Serial.println();
+	
 	Serial.println("-- Setting LEDs pins as output...");
+
 	pinMode(LED_IN_R, OUTPUT);
 	pinMode(LED_IN_G, OUTPUT);
 	pinMode(LED_IN_B, OUTPUT);
 	pinMode(LED_OUT_R, OUTPUT);
 	pinMode(LED_OUT_G, OUTPUT);
 	pinMode(LED_OUT_B, OUTPUT);
-	// Initializes the RFID modules
-	// Serial.println();
-	// Serial.println("-- Initializing RFID modules...");
-	// digitalWrite(SS_PIN_ETHERNET, HIGH);
-	// for (byte i = 0; i < NUM_READERS; i++)
-	// {
-	// 	digitalWrite(SS_PIN_INSIDE, HIGH);
-	// 	digitalWrite(SS_PIN_OUTSIDE, HIGH);
-	// 	digitalWrite(ssPins[i], LOW);
-	// 	readers[i].PCD_Init(ssPins[i], RST_PIN);
-	// 	Serial.print("Reader ");
-	// 	Serial.print(i + 1);
-	// 	Serial.print(" initialized!\tVersion: ");
-	// 	readers[i].PCD_DumpVersionToSerial();
-	// }	
-	// Initializes the Ethernet module
-	Serial.println();
+
+	Serial.println("-- Initializing RFID modules...");
+	
+	SPI.begin();
+	for (byte i = 0; i < NUM_READERS; i++)
+	{
+		digitalWrite(SS_PIN_INSIDE, HIGH);
+		digitalWrite(SS_PIN_OUTSIDE, HIGH);
+		digitalWrite(ssPins[i], LOW);
+		readers[i].PCD_Init(ssPins[i], RST_PIN);
+		Serial.print("-- Reader ");
+		Serial.print(i + 1);
+		
+		Serial.print(" initialized!\n- Version: ");
+		readers[i].PCD_DumpVersionToSerial();
+	}	
+
 	Serial.println("-- Initializing Ethernet module...");
-	digitalWrite(SS_PIN_INSIDE, HIGH);
-	digitalWrite(SS_PIN_OUTSIDE, HIGH);
-	digitalWrite(SS_PIN_ETHERNET, LOW);
-	byte IP [] = {192, 168, 88, 120};
-	Ethernet.begin(mac, IP);
-	delay(800);
+
+	for (byte i = 0; i < NUM_READERS; i++) {
+		digitalWrite(ssPins[i], HIGH);
+	}
+  
+	if (Ethernet.begin(mac) == 0) {
+		Serial.println("Failed to configure Ethernet using DHCP");
+		while(true); // Freezes here if ethernet setup fails
+  	}
+
 	Serial.print("- My MAC: ");
 	Serial.print(mac[0], HEX); Serial.print(":"); Serial.print(mac[1], HEX); Serial.print(":");
 	Serial.print(mac[2], HEX); Serial.print(":"); Serial.print(mac[3], HEX); Serial.print(":");
 	Serial.print(mac[4], HEX); Serial.print(":"); Serial.print(mac[5], HEX); Serial.println();
 	Serial.print("- My IP: ");
 	Serial.println(Ethernet.localIP());
+
 	// Initializes the sensor
-	Serial.println();
 	Serial.println("-- Setting sensor pin as input...");
 	pinMode(PIN_SENSOR, INPUT);
 	// Initializes the buzzer
-	Serial.println();
 	Serial.println("-- Setting buzzer pin as output...");
 	pinMode(PIN_BUZZER, OUTPUT);
-	while(true);
 }
 
 /*
@@ -659,21 +654,20 @@ void setup()
  */
 void loop() 
 {
-	// char entering_or_leaving = 'i';
-	// String tag = "";
-	// tag = ReadRFIDTags(&entering_or_leaving);
-	// while (tag == "")
-	// {
-	// 	Serial.println("Approach your card");
-	// 	delay(500);
-	// 	tag = ReadRFIDTags(&entering_or_leaving);
-	// }
-	// Serial.print("Card tag: ");
-	// Serial.println(tag);
+	char entering_or_leaving = 'i';
+	String tag = "";
+	while (tag == "")
+	{
+		Serial.println("Approach your card");
+		delay(500);
+		tag = ReadRFIDTags(&entering_or_leaving);
+	}
+	Serial.print("Card tag: ");
+	Serial.println(tag);
 
 	/*  Full code for Arduino Client (still in development) */
 	String pw = "";
-	String tag = "";
+	//String tag = "";
 	byte status = 255;
 	String hashed = "";
 	String output = "";
@@ -681,7 +675,7 @@ void loop()
 	char not_action = 'z';
 	String postData = "";
 	String tagsArray [MAX_VISITOR_NUM];
-	char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
+//	char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
 
 	// Resets the tagsArray
 	for (byte i = 0; i < MAX_VISITOR_NUM; i++)
