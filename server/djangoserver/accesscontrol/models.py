@@ -1,5 +1,6 @@
 from django.db import models
 from .errors import *
+from django.forms import ModelForm, PasswordInput
 
 ACCESS_LEVEL_CHOICES = (
 	(0, 'Visitor'),
@@ -70,7 +71,3 @@ class Event(models.Model):
 	room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True)
 	date = models.DateTimeField()
 	visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True)
-
-
-	# def __str__(self):
-	# 	return (self.date.strftime("%Y-%m-%d %H:%M:%S") + ": ")
