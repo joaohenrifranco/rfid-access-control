@@ -38,7 +38,7 @@ class Event(models.Model):
 		(PASSWORD_REQUIRED, 'Password required'),
 		(VISITOR_RFID_FOUND, 'Visitor card indentified'),
 		(VISITOR_AUTHORIZED, 'Visitor authorized'),
-		(VISITOR_RFID_NOT_FOUND, 'Visitor authorized'),
+		(VISITOR_RFID_NOT_FOUND, 'Visitor RFID not found'),
 		(OPEN_DOOR_TIMEOUT, 'Open door timeout'),
 		(UNKNOWN_ERROR, 'Unknown error'),
 		(ROOM_NOT_FOUND, 'Room not found'),
@@ -71,5 +71,6 @@ class Event(models.Model):
 	date = models.DateTimeField()
 	visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True)
 
-	def __str__(self):
-		return (self.date.strftime("%Y-%m-%d %H:%M:%S") + ": ")
+
+	# def __str__(self):
+	# 	return (self.date.strftime("%Y-%m-%d %H:%M:%S") + ": ")
