@@ -1,6 +1,8 @@
 from django.db import models
 from .errors import *
 from django.forms import ModelForm, PasswordInput
+from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 ACCESS_LEVEL_CHOICES = (
 	(0, 'Visitor'),
@@ -11,15 +13,35 @@ ACCESS_LEVEL_CHOICES = (
 	(5, 'Level 5'),
 )
 
-class User(models.Model):
+class ProfileManager(BaseUserManager):
+	def create_user(self, rfid_tag, name, access_level, password=None, **kwargs):
+		
+		if not rfid_tag:
+			raise ValueError('User must have an rfid_tag')
+
+		user = self.model(
+			# name=name,
+			# access_level=access_level
+			# rfid_tag=rfid_tag
+			**kwargs
+		)
+		user.set_password(self.cleaned_data["password"])
+		user.save(using=self._db)
+		return user
+
+class Profile(AbstractBaseUser):
 	name = models.CharField(max_length=200)
+	email = models.CharField(max_length=50)
 	access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='0')
 	rfid_tag = models.CharField(max_length=8)
-	hashed_password = models.CharField(max_length=64)
+	password= models.CharField(max_length=8)
+	
+	objects=ProfileManager()
 
-	# Necessary to show name correctly at DjangoAdmin
+	USERNAME_FIELD = 'email'
+	
 	def __str__(self):
-		return self.name.title()
+ 		return self.name.title()
 
 class Room(models.Model):
 	name = models.CharField(max_length=15)
@@ -29,11 +51,12 @@ class Room(models.Model):
 	# Necessary to show name correctly at DjangoAdmin
 	def __str__(self):
 		return self.name.title()
+	
 
 class Event(models.Model):
 	EVENT_TYPE_CHOICES = (
-    	(AUTHORIZED, 'Authorized'),
-    	(RFID_NOT_FOUND, 'RFID Tag not found'),
+		(AUTHORIZED, 'Authorized'),
+		(RFID_NOT_FOUND, 'RFID Tag not found'),
 		(INSUFFICIENT_PRIVILEGES, 'Insufficient privileges'),
 		(WRONG_PASSWORD, 'Invalid password'),
 		(PASSWORD_REQUIRED, 'Password required'),
@@ -46,8 +69,8 @@ class Event(models.Model):
 	)
 
 	READER_POSITION_CHOICES = (
-    	(0, 'Outside'),
-    	(1, 'Inside'),
+		(0, 'Outside'),
+		(1, 'Inside'),
 	)
 
 	API_MODULE_CHOICES = (
@@ -57,7 +80,7 @@ class Event(models.Model):
 	)
 
 	user = models.ForeignKey(
-		User, on_delete=models.PROTECT, 
+		Profile, on_delete=models.PROTECT, 
 		default=None, blank=True, 
 		null=True, 
 		related_name='employee'
@@ -70,4 +93,4 @@ class Event(models.Model):
 
 	room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True)
 	date = models.DateTimeField()
-	visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True)
+	visitors = models.ManyToManyField(Profile, related_name='visitors_authorized', default=None, blank=True)
