@@ -1,37 +1,23 @@
 from django.contrib import admin
 from django import forms
 from django.forms import PasswordInput
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import User as DjangoAdminUser, Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
-
-from .models import Profile, Room, Event
+from django.utils import timezone
+from api.models import User, Room, Event
 
 admin.site.site_title = 'Controle de Acesso LASPI'
 admin.site.site_header = 'Controle de Acesso LASPI'
 
-class EventAdmin(admin.ModelAdmin):
-    model = Event
-    list_display = ('date','user', 'room', 'event_type', 'reader_position')
-    list_filter = ['date','user', 'room', 'event_type', 'reader_position']
+class UserCreationForm(forms.ModelForm):
 
-class ProfileForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        exclude = ['last_login']
-        
-class ProfileAdmin(admin.ModelAdmin):
-    form = ProfileForm
-
-class ProfileCreationForm(forms.ModelForm):
-    """A form for creating new users. Includes all the required
-    fields, plus a repeated password."""
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
     password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
 
     class Meta:
-        model = Profile
-        fields = ('rfid_tag', 'access_level')
+        model = User
+        fields = ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag',)
 
     def clean_password2(self):
         # Check that the two password entries match
@@ -43,60 +29,76 @@ class ProfileCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         # Save the provided password in hashed format
-        user = super(ProfileCreationForm, self).save(commit=False)
+        user = super(UserCreationForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
+        user.date_added = timezone.now()
         if commit:
             user.save()
         return user
 
 
-class ProfileChangeForm(forms.ModelForm):
-    """A form for updating users. Includes all the fields on
-    the user, but replaces the password field with admin's
-    password hash display field.
-    """
-    password = ReadOnlyPasswordHashField()
+class UserChangeForm(forms.ModelForm):
+    password1 = forms.CharField(
+        label='Password', 
+        widget=forms.PasswordInput, 
+        required = False, 
+        help_text="Leave blank to keep same password")
+    password2 = forms.CharField(
+        label='Password confirmation', 
+        widget=forms.PasswordInput, 
+        required = False,
+        help_text="Leave blank to keep same password")
 
     class Meta:
-        model = Profile
-        fields = ('rfid_tag', 'access_level')
+        model = User
+        fields = ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag')
 
-    def clean_password(self):
-        # Regardless of what the user provides, return the initial value.
-        # This is done here, rather than on the field, because the
-        # field does not have access to the initial value
-        return self.initial["password"]
+    def clean_password2(self):
+        # Check that the two password entries match
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+        if password1 != password2:
+            raise forms.ValidationError("Passwords don't match")
+        return password2
 
+    def save(self, commit=True):
+        # Save the provided password in hashed format
+        user = super(UserChangeForm, self).save(commit=False)
+        if (self.cleaned_data["password1"] != ""):
+            user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.save()
+        return user
+    
+    def clean_date_added(self):
+        return self.initial["date_added"]
 
 class UserAdmin(BaseUserAdmin):
     # The forms to add and change user instances
-    form = ProfileChangeForm
-    add_form = ProfileCreationForm
+    form = UserChangeForm
+    add_form = UserCreationForm
 
-    # The fields to be used in displaying the User model.
-    # These override the definitions on the base UserAdmin
-    # that reference specific fields on auth.User.
-    fields = ('rfid_tag', 'access_level')
-    list_display =  ('rfid_tag', 'access_level')
-    list_filter = ('rfid_tag', 'access_level')
-    # fieldsets = (
-    #     (None, {'fields': ('email', 'password')}),
-    #     ('Personal info', {'fields': ('date_of_birth',)}),
-    #     ('Permissions', {'fields': ('is_admin',)}),
-    # )
-    # add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
-    # overrides get_fieldsets to use this attribute when creating a user.
-    # add_fieldsets = (
-    #     (None, {
-    #         'classes': ('wide',),
-    #         'fields': ('email', 'date_of_birth', 'password1', 'password2')}
-    #     ),
-    # )
-    search_fields = ('name',)
-    ordering = ('name',)
+    list_display = ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag',)
+    list_filter = ('access_level' ,'rfid_tag',)
+    fieldsets = (
+        (None, {'fields': ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag', 'password1', 'password2')}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag', 'password1', 'password2')}
+        ),
+    )
+    search_fields =  ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag',)
+    ordering = ()
     filter_horizontal = ()
 
+class EventAdmin(admin.ModelAdmin):
+    model = Event
+    list_display = ('date','user', 'room', 'event_type', 'reader_position')
+    list_filter = ['date','user', 'room', 'event_type', 'reader_position']
 
-admin.site.register(Profile, ProfileAdmin)
+admin.site.register(User, UserAdmin)        
 admin.site.register(Room)
 admin.site.register(Event, EventAdmin)
