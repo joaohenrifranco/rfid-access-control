@@ -4,6 +4,7 @@ from django.forms import PasswordInput
 from django.contrib.auth.models import User as DjangoAdminUser, Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.contrib.admin.utils import flatten_fieldsets
 from django.utils import timezone
 from api.models import User, Room, Event
 
@@ -98,6 +99,21 @@ class EventAdmin(admin.ModelAdmin):
     model = Event
     list_display = ('date','user', 'room', 'event_type', 'reader_position')
     list_filter = ['date','user', 'room', 'event_type', 'reader_position']
+
+    def get_readonly_fields(self, request, obj=None):
+        if self.declared_fieldsets:
+            fields = flatten_fieldsets(self.declared_fieldsets)
+        else:
+            form = self.get_formset(request, obj).form
+            fields = form.base_fields.keys()
+        return fields
+    
+    def has_add_permission(self, request):
+        # Nobody is allowed to add
+        return False
+    def has_delete_permission(self, request, obj=None):
+        # Nobody is allowed to delete
+        return False
 
 admin.site.register(User, UserAdmin)        
 admin.site.register(Room)
