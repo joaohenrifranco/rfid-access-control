@@ -151,7 +151,7 @@ def authenticate(request):
 		return JsonResponse(response)
 
 @csrf_exempt # Disables CSRF verification for this method
-def authorize_visitor(request): ##TODO: MAKE AN ARRAY OF VISITOR TAGS
+def authorize_visitor(request):
 	if request.method == 'GET':
 		return index(request)
 	
