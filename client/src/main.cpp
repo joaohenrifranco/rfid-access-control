@@ -1,5 +1,5 @@
 /*
- *  This code is compatible with Arduino Pro Mini 16MHz
+ *  This code is compatible with Arduino MEGA 2560 R3
  */
 
 /*
@@ -16,77 +16,78 @@
 /*
  *  Macros
  */
-#define WHO_AM_I              "corredor"
-#define MEASURE_NUMBERS       10
-#define DOOR_TIMEOUT          15000
-#define MAX_VISITOR_NUM       20
-#define SERIAL_SPEED          9600
-#define MAC_ADDRESS       					{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
-#define SERVER_IP         					{192, 168, 88, 64}
-#define REQUEST_UNLOCK    					"/api/request-unlock"
-#define AUTHENTICATE      					"/api/authenticate"
-#define AUTHORIZE_VISITOR 					"/api/authorize-visitor"
-#define REQUEST_PORT      					8000                  					//Standard HTTP port
-#define KEYPAD_LINES      					4
-#define KEYPAD_COLUMNS    					3
-#define KEYS              					{{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}, {'*', '0', '#'}}
-#define END_OF_PASSWORD   					'#'
-#define QUIT_TYPING       					'*'
-#define NUM_READERS       					2
-byte BLACK [] =											{0, 0, 0};								//Turn LED off
-byte BLUE [] =											{0, 0, HIGH};
-byte GREEN [] =											{0, HIGH, 0};
-byte AQUA [] =											{0, HIGH, HIGH};						//Light blue
-byte RED [] =												{HIGH, 0, 0};
-byte FUCHSIA [] =										{HIGH, 0, HIGH};						//Kinda purple
-byte YELLOW [] =										{HIGH, HIGH, 0};
-byte WHITE [] =											{HIGH, HIGH, HIGH};
-#define WAITING_COLOR								YELLOW
-#define OK_COLOR										GREEN
-#define ERROR_COLOR									RED
-#define STANDBY_COLOR								WHITE
-#define DO_SOMETHING_COLOR					BLUE
+#define WHO_AM_I              					"corredor"
+#define MEASURE_NUMBERS       					10
+#define DOOR_TIMEOUT          					15000
+#define MAX_VISITOR_NUM       					20
+#define SERIAL_SPEED          					9600
+#define MAC_ADDRESS       						{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
+#define SERVER_IP         						{192, 168, 88, 61}
+#define REQUEST_UNLOCK    						"/api/request-unlock"
+#define AUTHENTICATE      						"/api/authenticate"
+#define AUTHORIZE_VISITOR 						"/api/authorize-visitor"
+#define REQUEST_PORT      						8000                  					//Standard HTTP port
+#define KEYPAD_LINES      						4
+#define KEYPAD_COLUMNS    						3
+#define KEYS              						{{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}, {'*', '0', '#'}}
+#define END_OF_PASSWORD   						'#'
+#define QUIT_TYPING       						'*'
+#define NUM_READERS       						2
+byte BLACK [] =									{0, 0, 0};								//Turn LED off
+byte BLUE [] =									{0, 0, HIGH};
+byte GREEN [] =									{0, HIGH, 0};
+byte AQUA [] =									{0, HIGH, HIGH};						//Light blue
+byte RED [] =									{HIGH, 0, 0};
+byte FUCHSIA [] =								{HIGH, 0, HIGH};						//Kinda purple
+byte YELLOW [] =								{HIGH, HIGH, 0};
+byte WHITE [] =									{HIGH, HIGH, HIGH};
+#define WAITING_COLOR							YELLOW
+#define OK_COLOR								GREEN
+#define ERROR_COLOR								RED
+#define STANDBY_COLOR							WHITE
+#define DO_SOMETHING_COLOR						BLUE
 
 /*
  *	Server Error Codes
  */
-#define UNKNOWN_ERROR								-1
-#define AUTHORIZED									0
+#define UNKNOWN_ERROR							-1
+#define AUTHORIZED								0
 #define RFID_NOT_FOUND							1
-#define INSUFFICIENT_PRIVILEGES			2
+#define INSUFFICIENT_PRIVILEGES					2
 #define WRONG_PASSWORD							3
 #define PASSWORD_REQUIRED						4
-#define VISITOR_RFID_FOUND					5
-#define VISITOR_AUTHORIZED					6
-#define VISITOR_RFID_NOT_FOUND			7
+#define VISITOR_RFID_FOUND						5
+#define VISITOR_AUTHORIZED						6
+#define VISITOR_RFID_NOT_FOUND					7
 #define ROOM_NOT_FOUND							8
 #define OPEN_DOOR_TIMEOUT						9
 
 /*
  *  Pins
  */
-#define LED_IN_R										A0
-#define LED_IN_G										A1
-#define LED_IN_B										A2
-#define LED_OUT_R										A3
-#define LED_OUT_G										A4
-#define LED_OUT_B										A5
-#define PIN_SENSOR									A6
-#define PIN_BUZZER									A7
-#define RST_PIN											2
-#define KEYPAD_LIN_PINS							{3, 4, 5, 6}
-#define KEYPAD_COL_PINS							{7, 0, 1}
+#define LED_IN_R								36
+#define LED_IN_G								38
+#define LED_IN_B								40
+#define LED_OUT_R								42
+#define LED_OUT_G								44
+#define LED_OUT_B								46
+#define PIN_SENSOR								48
+#define PIN_BUZZER								26
+#define RST_PIN									30
+#define KEYPAD_LIN_PINS							{37, 39, 41, 43}
+#define KEYPAD_COL_PINS							{45, 47, 49}
 
 // Macros for reference only
-#define MOSI_PIN										11
-#define MISO_PIN										12
-#define SCK_PIN											13
+#define MISO_PIN								50
+#define MOSI_PIN								51
+#define SCK_PIN									52
 
-const byte SS_PIN_INSIDE	= 				9;
-const byte SS_PIN_OUTSIDE	=					8;
+//	SS pins
+const byte SS_PIN_ETHERNET = 					10;
+const byte SS_PIN_OUTSIDE	=					22;
+const byte SS_PIN_INSIDE	= 					24;
 
-#define SS_PIN_ETHERNET 10
-
+//	Redefining Ethernet SS pin
 #ifdef ETHERNET_SHIELD_SPI_CS
 	#undef ETHERNET_SHIELD_SPI_CS
 #endif
