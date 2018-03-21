@@ -1,4 +1,5 @@
 .vscode/
 __pycache__/
 myenv/
-server/djangoserver/accesscontrol/migrations/
+migrations/
+*.sqlite3
