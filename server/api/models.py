@@ -64,7 +64,6 @@ class Room(models.Model):
   def __str__(self):
     return self.name.title()
   
-
 class Event(models.Model):
   EVENT_TYPE_CHOICES = (
     (AUTHORIZED, 'Authorized'),

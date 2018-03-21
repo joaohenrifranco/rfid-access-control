@@ -111,7 +111,7 @@ def authenticate(request):
 
 		try:
 			data = json.loads(request.body)
-			request_hashed_password = data['password']
+			request_password = data['password']
 			request_rfid_tag = data['rfidTag']
 		except:
 			return HttpResponse("Malformed POST")
@@ -119,6 +119,7 @@ def authenticate(request):
 		response = {}
 
 		log = Event()
+		log.reader_position = 0
 		log.rfid = request_rfid_tag
 		log.date = datetime.datetime.now()
 		log.api_module = AUTH_API
@@ -138,7 +139,7 @@ def authenticate(request):
 		finally:
 			log.save()
 
-		if user.hashed_password != request_hashed_password:
+		if (user.password.lower() != ("%s%s" % ("sha256$$", request_password)).lower()):
 			log.event_type = WRONG_PASSWORD
 			response['status'] = WRONG_PASSWORD
 			return JsonResponse(response)
