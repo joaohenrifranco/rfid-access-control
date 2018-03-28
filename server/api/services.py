@@ -9,6 +9,3 @@ def get_active_tag_list():
 
 def get_current_tag_owner(rfid_tag):
     return get_active_tag_list().get(user=self.rfid_tag)
-
-
-    

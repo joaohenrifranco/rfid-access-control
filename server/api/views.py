@@ -38,7 +38,7 @@ def request_unlock(request):
 
 		# Tries to get user and room from database with request info. Logs errors.
 		try:
-			user = get_current_tag_owner(rfid_tag)
+			user = get_current_tag_owner(request_rfid_tag)
 			room = Room.objects.get(name=request_room_id)
 		except Room.DoesNotExist:
 			log.event_type = ROOM_NOT_FOUND
