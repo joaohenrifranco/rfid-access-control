@@ -1,7 +1,5 @@
 from django.db import models
 from .errors import *
-from django.forms import ModelForm, PasswordInput
-from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 ACCESS_LEVEL_CHOICES = (
@@ -13,20 +11,18 @@ ACCESS_LEVEL_CHOICES = (
   (5, 'Level 5'),
 )
 
+class RfidTag(models.Model):
+  rfidTagID = models.CharField(max_length=8, default=None)
+  created = models.DateTimeField(auto_now_add=True)
+
 class UserManager(BaseUserManager):
   def create_user(self, email, date_added=None, password=None):
-
     if not email:
       raise ValueError('Users must have an email address')
-
-    user = self.model(
-      email=self.normalize_email(email),
-    )
-
+    user = self.model(email=self.normalize_email(email),)
     user.set_password(password)
     user.save(using=self._db)
     return user
-
 
 class User(AbstractBaseUser):
   email = models.EmailField(
@@ -38,13 +34,13 @@ class User(AbstractBaseUser):
   last_name = models.CharField(max_length=200)
   cpf = models.CharField(max_length=11, unique=True)
   access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='0')
-  rfid_tag = models.CharField(max_length=8)	
-  date_added = models.DateField()
-
+  rfid = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True)
+  created = models.DateTimeField(auto_now_add=True)
+  
   objects = UserManager()
 
   USERNAME_FIELD = 'email'
-  REQUIRED_FIELDS = ['date_added']
+  REQUIRED_FIELDS = ['created']
 
   def get_full_name(self):
     return "%s %s" % (self.first_name, self.last_name)
@@ -57,12 +53,26 @@ class User(AbstractBaseUser):
 
 class Room(models.Model):
   name = models.CharField(max_length=15)
-  description = models.TextField
+  description = models.TextField(null=True, blank=True)
   access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='5')
   
   # Necessary to show name correctly at DjangoAdmin
   def __str__(self):
     return self.name.title()
+
+class RfidTagUserLink(models.Model):
+  rfidTag = models.ForeignKey(
+  	RfidTag, on_delete=models.PROTECT, 
+  	default=None,
+  	related_name='rfidTagUserLink'
+  	)
+  user = models.ForeignKey(
+  	User, on_delete=models.PROTECT, 
+  	default=None,
+  	related_name='rfidTagUserLink'
+  	)
+  created = models.DateTimeField(auto_now_add=True)
+  expire_date = models.DateTimeField(null=True, blank=True)
   
 class Event(models.Model):
   EVENT_TYPE_CHOICES = (
@@ -94,15 +104,13 @@ class Event(models.Model):
   	User, on_delete=models.PROTECT, 
   	default=None, blank=True, 
   	null=True, 
-  	related_name='employee'
+  	related_name='event'
   	)
   
   event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, default=LOGGING_ERROR)
   reader_position = models.IntegerField(choices=READER_POSITION_CHOICES)
-  api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None, null=True)
+  api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None)
   rfid = models.CharField(max_length=8, default=None, blank=True, null=True)
-
   room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True)
-  date = models.DateTimeField()
+  date = models.DateTimeField(auto_now_add=True)
   visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True)
-

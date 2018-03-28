@@ -4,13 +4,14 @@ from django.http import JsonResponse
 import json
 import datetime
 
+from .services import *
 from .models import *
 from .errors import *
 
 REQUIRE_PASSWORD_LEVEL_THRESHOLD = 3
 
 def index(request):
-	return HttpResponse("Access control api is online!")
+	return HttpResponse("Access control api is online! It is accessible through POST requests.")
 
 @csrf_exempt # Disables CSRF verification for this method
 def request_unlock(request):
@@ -37,7 +38,7 @@ def request_unlock(request):
 
 		# Tries to get user and room from database with request info. Logs errors.
 		try:
-			user = User.objects.get(rfid_tag=request_rfid_tag)
+			user = get_current_tag_owner(rfid_tag)
 			room = Room.objects.get(name=request_room_id)
 		except Room.DoesNotExist:
 			log.event_type = ROOM_NOT_FOUND

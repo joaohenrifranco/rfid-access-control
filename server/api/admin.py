@@ -6,7 +6,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.contrib.admin.utils import flatten_fieldsets
 from django.utils import timezone
-from api.models import User, Room, Event
+from api.models import User, Room, Event, RfidTagUserLink
 
 admin.site.site_title = 'Controle de Acesso LASPI'
 admin.site.site_header = 'Controle de Acesso LASPI'
@@ -18,7 +18,7 @@ class UserCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag',)
+        fields = ('first_name','last_name','email', 'cpf','access_level')
 
     def clean_password2(self):
         # Check that the two password entries match
@@ -52,7 +52,7 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag')
+        fields = ('first_name','last_name','email', 'cpf','access_level')
 
     def clean_password2(self):
         # Check that the two password entries match
@@ -79,19 +79,19 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag',)
-    list_filter = ('access_level' ,'rfid_tag',)
+    list_display = ('first_name','last_name','email', 'cpf','access_level')
+    list_filter = ('access_level', )
     fieldsets = (
-        (None, {'fields': ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag', 'password1', 'password2')}),
+        (None, {'fields': ('first_name','last_name','email', 'cpf','access_level', 'password1', 'password2')}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag', 'password1', 'password2')}
+            'fields': ('first_name','last_name','email', 'cpf','access_level', 'password1', 'password2')}
         ),
     )
-    search_fields =  ('first_name','last_name','email', 'cpf','access_level' ,'rfid_tag',)
+    search_fields =  ('first_name','last_name','email', 'cpf','access_level',)
     ordering = ()
     filter_horizontal = ()
 
@@ -117,4 +117,5 @@ class EventAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)        
 admin.site.register(Room)
+admin.site.register(RfidTagUserLink)
 admin.site.register(Event, EventAdmin)
