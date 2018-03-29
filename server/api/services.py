@@ -17,5 +17,14 @@ def check_password(user, password):
         return True
     return False
 
+def correct_double_association(rfid_tag):
+    try:
+        user = get_current_tag_owner(rfid_tag)
+    except:
+        return
+    
+    user.rfid_tag.expire_date = datetime.datetime.now()
+
+
 def malformed_post():
     return HttpResponse("Malformed POST request. Please check documentation.")
