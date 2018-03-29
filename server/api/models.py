@@ -48,12 +48,12 @@ class User(AbstractBaseUser):
   def __str__(self):
     return "%s %s" % (self.first_name, self.last_name)
 
-
 class RfidTagUserLink(models.Model):
   rfid_tag = models.ForeignKey(RfidTag, on_delete=models.PROTECT, default=None)
   user = models.ForeignKey(User, on_delete=models.PROTECT, default=None)
   created = models.DateTimeField(auto_now_add=True)
   expire_date = models.DateTimeField(null=True, blank=True)
+
 
 class Room(models.Model):
   name = models.CharField(max_length=15)

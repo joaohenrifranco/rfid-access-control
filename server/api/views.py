@@ -8,7 +8,6 @@ from .services import *
 from .models import *
 from .errors import *
 
-REQUIRE_PASSWORD_LEVEL_THRESHOLD = 3
 
 def index(request):
 	return HttpResponse("Access control api is online! It is accessible through POST requests.")
@@ -27,7 +26,7 @@ def request_unlock(request):
 			request_room_id = data['roomId']
 			request_action = data['action']
 		except:
-			return HttpResponse("Malformed POST")
+			return malformed_post()
 
 		response = {}
 		log = Event()
@@ -126,7 +125,7 @@ def authenticate(request):
 		log.api_module = AUTH_API
 		
 		try:
-			user = User.objects.get(rfid_tag=request_rfid_tag)
+			user = get_current_tag_owner(request_rfid_tag)
 		except User.DoesNotExist:
 			log.event_type = RFID_NOT_FOUND
 
@@ -176,8 +175,8 @@ def authorize_visitor(request):
 		log.api_module = VISITOR_API
 
 		try:
-			log.room = Room.objects.get(name=request_room_id)
-			log.user = User.objects.get(rfid_tag=request_rfid_tag)
+			room = Room.objects.get(name=request_room_id)
+			user = get_current_tag_owner(request_rfid_tag)
 		except User.DoesNotExist:
 			log.event_type = RFID_NOT_FOUND
 
@@ -188,25 +187,21 @@ def authorize_visitor(request):
 			response['status'] =  ROOM_NOT_FOUND
 	
 			return JsonResponse(response)
-
-		try:
-			user = User.objects.get(rfid_tag=request_rfid_tag)
-		except:
-			response['status'] = RFID_NOT_FOUND
-			return JsonResponse(response)
-
+		finally
+			log.save()
+		
+		log.user = user
+		log.room = room
+		
 		if (user.access_level == 0): 
 			response['status'] = INSUFFICIENT_PRIVILEGES
 			return JsonResponse(response)
 
 		visitor_list = []
 
-
-
 		for visitor_rfid in request_visitor_array:
 			try:
-				visitor_list.append(User.objects.get(rfid_tag=visitor_rfid))
-				
+				visitor_list.append(get_current_tag_owner(visitor_rfid))
 			except:
 				log.event_type = VISITOR_RFID_NOT_FOUND
 				log.save()
