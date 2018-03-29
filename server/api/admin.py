@@ -73,6 +73,7 @@ class UserChangeForm(forms.ModelForm):
 
 class RfidTagUserLinkInline(admin.TabularInline):
 	model = RfidTagUserLink
+	extra = 0
 
 class UserAdmin(BaseUserAdmin):
 	# The forms to add and change user instances

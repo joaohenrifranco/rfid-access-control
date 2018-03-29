@@ -114,7 +114,7 @@ def authenticate(request):
 			request_password = data['password']
 			request_rfid_tag = data['rfidTag']
 		except:
-			return HttpResponse("Malformed POST")
+			return malformed_post()
 				
 		response = {}
 
@@ -139,7 +139,7 @@ def authenticate(request):
 		finally:
 			log.save()
 
-		if (user.password.lower() != ("%s%s" % ("sha256$$", request_password)).lower()):
+		if (not check_password()):
 			log.event_type = WRONG_PASSWORD
 			response['status'] = WRONG_PASSWORD
 			return JsonResponse(response)
@@ -164,7 +164,7 @@ def authorize_visitor(request):
 			request_visitor_array = data['rfidTagsVisitors']
 			request_room_id = data['roomId']
 		except:
-			return HttpResponse("Malformed POST")
+			return malformed_post()
 
 		response = {}
 
@@ -187,7 +187,7 @@ def authorize_visitor(request):
 			response['status'] =  ROOM_NOT_FOUND
 	
 			return JsonResponse(response)
-		finally
+		finally:
 			log.save()
 		
 		log.user = user

@@ -53,6 +53,9 @@ class RfidTagUserLink(models.Model):
   user = models.ForeignKey(User, on_delete=models.PROTECT, default=None)
   created = models.DateTimeField(auto_now_add=True)
   expire_date = models.DateTimeField(null=True, blank=True)
+  
+  def __str__(self):
+    return (self.rfid_tag.rfid_tag_id + " - " + self.user.get_full_name())
 
 
 class Room(models.Model):

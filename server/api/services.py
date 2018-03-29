@@ -12,6 +12,10 @@ def get_current_tag_owner(rfid_tag):
     print(all_valid_users)
     return all_valid_users.get(rfid_tag__rfid_tag_id=rfid_tag.upper())
 
+def check_password(user, password):
+    if (user.password.lower() == ("%s%s" % ("sha256$$", password)).lower()):
+        return True
+    return False
 
-def malformed_post()
+def malformed_post():
     return HttpResponse("Malformed POST request. Please check documentation.")
