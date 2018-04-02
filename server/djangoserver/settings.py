@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'api'
+    'accesscontrol'
 ]
 
 MIDDLEWARE = [
@@ -82,7 +82,7 @@ DATABASES = {
 # NOTE: Custom hasher was added to match arduino-client SHA-256 algorithm
 
 PASSWORD_HASHERS = [
-    'api.hashers.SHA256PasswordHasher',
+    'accesscontrol.hashers.SHA256PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.Argon2PasswordHasher',

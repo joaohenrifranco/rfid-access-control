@@ -5,7 +5,7 @@ from django.contrib.auth.models import User as DjangoAdminUser, Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
 
-from api.models import *
+from .models import *
 
 admin.site.site_title = 'Controle de Acesso LASPI'
 admin.site.site_header = 'Controle de Acesso LASPI'
