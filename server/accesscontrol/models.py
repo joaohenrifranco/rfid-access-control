@@ -1,7 +1,7 @@
 from django.db import models
 from .errors import *
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from django.db.models.signals import pre_save
+#from django.db.models.signals import pre_save
 from .services import *
 
 ACCESS_LEVEL_CHOICES = (
@@ -59,11 +59,12 @@ class RfidTagUserLink(models.Model):
   def __str__(self):
     return (self.rfid_tag.rfid_tag_id + " - " + self.user.get_full_name())
 
-  def rfid_tag_user_link_pre_save(sender, instance, *args, **kwargs):
-    if created:
-      print("ddd")
+  # def rfid_tag_user_link_pre_save(sender, instance, *args, **kwargs):
+  #   # TODO: DEACTIVATE OTHER ENTRIS WITH SAME RFID TAG LINK
+  #   # if created:
+  #   #   print("Created")
 
-pre_save.connect(RfidTagUserLink.rfid_tag_user_link_pre_save, RfidTagUserLink, dispatch_uid=".models.RfidTagUserLink")
+#pre_save.connect(RfidTagUserLink.rfid_tag_user_link_pre_save, RfidTagUserLink, dispatch_uid=".models.RfidTagUserLink")
 
 class Room(models.Model):
   name = models.CharField(max_length=15)
