@@ -59,7 +59,7 @@ class RfidTagUserLink(models.Model):
   def __str__(self):
     return (self.rfid_tag.rfid_tag_id + " - " + self.user.get_full_name())
 
-  def rfid_tag_user_link_pre_save(sender, instance, created, *args, **kwargs):
+  def rfid_tag_user_link_pre_save(sender, instance, *args, **kwargs):
     if created:
       print("ddd")
 
