@@ -1,21 +1,22 @@
 from django.db import models
 from .errors import *
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.utils.translation import ugettext_lazy as _
 #from django.db.models.signals import pre_save
 from .services import *
 
 ACCESS_LEVEL_CHOICES = (
-  (0, 'Visitor'),
-  (1, 'Level 1'),
-  (2, 'Level 2'),
-  (3, 'Level 3'),
-  (4, 'Level 4'),
-  (5, 'Level 5'),
+  (0, _('Visitor')),
+  (1, _('Level 1')),
+  (2, _('Level 2')),
+  (3, _('Level 3')),
+  (4, _('Level 4')),
+  (5, _('Level 5')),
 )
 
 class RfidTag(models.Model):
-  rfid_tag_id = models.CharField(max_length=8, default=None, unique=True)
-  created = models.DateTimeField(auto_now_add=True)
+  rfid_tag_id = models.CharField(verbose_name=_("RFID Tag ID"), max_length=8, default=None, unique=True)
+  created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
   def __str__(self):
     return self.rfid_tag_id.upper()
 
@@ -29,13 +30,13 @@ class UserManager(BaseUserManager):
     return user
 
 class User(AbstractBaseUser):
-  email = models.EmailField(max_length=255, unique=True)
-  first_name = models.CharField(max_length=200)
-  last_name = models.CharField(max_length=200)
-  cpf = models.CharField(max_length=11, unique=True)
-  access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='0')
-  rfid_tag = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True)
-  created = models.DateTimeField(auto_now_add=True)
+  email = models.EmailField(verbose_name=_("Email"), max_length=255, unique=True)
+  first_name = models.CharField(verbose_name=_("First name"), max_length=200)
+  last_name = models.CharField(verbose_name=_("Last name"), max_length=200)
+  cpf = models.CharField(verbose_name=_("CPF"), max_length=11, unique=True)
+  access_level = models.IntegerField(verbose_name=_("Access level"), choices=ACCESS_LEVEL_CHOICES, default='0')
+  rfid_tag = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True, verbose_name=_("RFID Tag"))
+  created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
   
   objects = UserManager()
 
@@ -51,10 +52,10 @@ class User(AbstractBaseUser):
     return "%s %s" % (self.first_name, self.last_name)
 
 class RfidTagUserLink(models.Model):
-  rfid_tag = models.ForeignKey(RfidTag, on_delete=models.PROTECT, default=None)
-  user = models.ForeignKey(User, on_delete=models.PROTECT, default=None)
-  created = models.DateTimeField(auto_now_add=True)
-  expire_date = models.DateTimeField(null=True, blank=True)
+  rfid_tag = models.ForeignKey(RfidTag, on_delete=models.PROTECT, default=None, verbose_name=_("RFID Tag"))
+  user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, verbose_name=_("User"))
+  created = models.DateTimeField(auto_now_add=True, verbose_name=_("Created"))
+  expire_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Expire date"))
   
   def __str__(self):
     return (self.rfid_tag.rfid_tag_id + " - " + self.user.get_full_name())
@@ -67,9 +68,9 @@ class RfidTagUserLink(models.Model):
 #pre_save.connect(RfidTagUserLink.rfid_tag_user_link_pre_save, RfidTagUserLink, dispatch_uid=".models.RfidTagUserLink")
 
 class Room(models.Model):
-  name = models.CharField(max_length=15)
-  description = models.TextField(null=True, blank=True)
-  access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='5')
+  name = models.CharField(max_length=15, verbose_name=_("Room ID"))
+  description = models.TextField(null=True, blank=True, verbose_name=_("Description"))
+  access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='5', verbose_name=_("Access level"))
   
   # Necessary to show name correctly at DjangoAdmin
   def __str__(self):
@@ -77,22 +78,22 @@ class Room(models.Model):
   
 class Event(models.Model):
   EVENT_TYPE_CHOICES = (
-    (AUTHORIZED, 'Authorized'),
-    (RFID_NOT_FOUND, 'RFID Tag not found'),
-    (INSUFFICIENT_PRIVILEGES, 'Insufficient privileges'),
-    (WRONG_PASSWORD, 'Invalid password'),
-    (PASSWORD_REQUIRED, 'Password required'),
-    (VISITOR_RFID_FOUND, 'Visitor card indentified'),
-    (VISITOR_AUTHORIZED, 'Visitor authorized'),
-    (VISITOR_RFID_NOT_FOUND, 'Visitor RFID not found'),
-    (OPEN_DOOR_TIMEOUT, 'Open door timeout'),
-    (UNKNOWN_ERROR, 'Unknown error'),
-    (ROOM_NOT_FOUND, 'Room not found'),
+    (AUTHORIZED, _('Authorized')),
+    (RFID_NOT_FOUND, _('RFID Tag not found')),
+    (INSUFFICIENT_PRIVILEGES, _('Insufficient privileges')),
+    (WRONG_PASSWORD, _('Invalid password')),
+    (PASSWORD_REQUIRED, _('Password required')),
+    (VISITOR_RFID_FOUND, _('Visitor card indentified')),
+    (VISITOR_AUTHORIZED, _('Visitor authorized')),
+    (VISITOR_RFID_NOT_FOUND, _('Visitor RFID not found')),
+    (OPEN_DOOR_TIMEOUT, _('Open door timeout')),
+    (UNKNOWN_ERROR, _('Unknown error')),
+    (ROOM_NOT_FOUND, _('Room not found')),
   )
 
   READER_POSITION_CHOICES = (
-    (0, 'Outside'),
-    (1, 'Inside'),
+    (0, _('Outside')),
+    (1, _('Inside')),
   )
 
   API_MODULE_CHOICES = (
@@ -101,12 +102,12 @@ class Event(models.Model):
     (VISITOR_API, '/api/authorize-visitor')
   )
 
-  user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, blank=True, null=True, related_name='events')
+  user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, blank=True, null=True, related_name='events', verbose_name=_("User"))
   
-  event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, default=LOGGING_ERROR)
-  reader_position = models.IntegerField(choices=READER_POSITION_CHOICES)
-  api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None)
-  rfid_tag_id = models.CharField(max_length=8, default=None, blank=True, null=True)
-  room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True)
-  date = models.DateTimeField(auto_now_add=True)
-  visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True)
+  event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, default=LOGGING_ERROR, verbose_name=_("Event type"))
+  reader_position = models.IntegerField(choices=READER_POSITION_CHOICES, verbose_name=_("Reader position"))
+  api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None, verbose_name=_("Api Module"))
+  rfid_tag_id = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name=_("RFID Tag ID"))
+  room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True, verbose_name=_("Room"))
+  date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date ocurred"))
+  visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True, verbose_name=_("Visitors"))

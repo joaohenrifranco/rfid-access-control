@@ -3,3 +3,4 @@ __pycache__/
 myenv/
 migrations/
 *.sqlite3
+static/
