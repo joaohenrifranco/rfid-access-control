@@ -4,6 +4,7 @@ from django.forms import PasswordInput
 from django.contrib.auth.models import User as DjangoAdminUser, Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 
 from .models import *
 
@@ -11,8 +12,8 @@ admin.site.site_title = 'Controle de Acesso LASPI'
 admin.site.site_header = 'Controle de Acesso LASPI'
 
 class UserCreationForm(forms.ModelForm):
-	password_input = forms.CharField(label='Password', widget=forms.PasswordInput)
-	password_conf_input = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
+	password_input = forms.CharField(label=_('Password'), widget=forms.PasswordInput)
+	password_conf_input = forms.CharField(label=_('Password confirmation'), widget=forms.PasswordInput)
 
 	class Meta:
 		model = User
@@ -23,7 +24,7 @@ class UserCreationForm(forms.ModelForm):
 		password_input = self.cleaned_data.get("password_input")
 		password_conf_input = self.cleaned_data.get("password_conf_input")
 		if password_input and password_conf_input and password_input != password_conf_input:
-			raise forms.ValidationError("Passwords don't match")
+			raise forms.ValidationError(_("Passwords don't match"))
 		return password_conf_input
 
 	def save(self, commit=True):
@@ -37,15 +38,15 @@ class UserCreationForm(forms.ModelForm):
 
 class UserChangeForm(forms.ModelForm):
 	password_input = forms.CharField(
-		label='Password', 
+		label=_('Password'), 
 		widget=forms.PasswordInput, 
 		required = False, 
-		help_text="Leave blank to keep same password")
+		help_text=_("Leave blank to keep same password"))
 	password_conf_input = forms.CharField(
-		label='Password confirmation', 
+		label=_('Password confirmation'), 
 		widget=forms.PasswordInput, 
 		required = False,
-		help_text="Leave blank to keep same password")
+		help_text=_("Leave blank to keep same password"))
 
 	class Meta:
 		model = User
@@ -56,7 +57,7 @@ class UserChangeForm(forms.ModelForm):
 		password_input = self.cleaned_data.get("password_input")
 		password_conf_input = self.cleaned_data.get("password_conf_input")
 		if password_input != password_conf_input:
-			raise forms.ValidationError("Passwords don't match")
+			raise forms.ValidationError(_("Passwords don't match"))
 		return password_conf_input
 
 	def save(self, commit=True):

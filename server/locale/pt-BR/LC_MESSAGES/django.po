@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-04-06 15:27+0000\n"
+"POT-Creation-Date: 2018-04-06 15:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,22 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: accesscontrol/admin.py:15 accesscontrol/admin.py:41
+msgid "Password required"
+msgstr "Senha solicitada"
+
+#: accesscontrol/admin.py:16 accesscontrol/admin.py:46
+msgid "Password confirmation"
+msgstr "Confirmação de Senha"
+
+#: accesscontrol/admin.py:27 accesscontrol/admin.py:60
+msgid "Passwords don't match"
+msgstr "Senhas não conferem"
+
+#: accesscontrol/admin.py:44 accesscontrol/admin.py:49
+msgid "Leave blank to keep same password"
+msgstr "Deixe em branco para manter a mesma senha"
 
 #: accesscontrol/hashers.py:50
 msgid "algorithm"
@@ -118,10 +134,6 @@ msgstr "Privilégios insuficientes"
 msgid "Invalid password"
 msgstr "Senha inválida"
 
-#: accesscontrol/models.py:85
-msgid "Password required"
-msgstr "Senha solicitada"
-
 #: accesscontrol/models.py:86
 msgid "Visitor card indentified"
 msgstr "Tag de visitante identificada"
@@ -178,10 +190,10 @@ msgstr "Data do ocorrido"
 msgid "Visitors"
 msgstr "Visitantes"
 
-#: djangoserver/settings.py:103
+#: djangoserver/settings.py:104
 msgid "English"
 msgstr "Inglês"
 
-#: djangoserver/settings.py:104
+#: djangoserver/settings.py:105
 msgid "Brazilian Portuguese"
 msgstr "Português Brasileiro"
