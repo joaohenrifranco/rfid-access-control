@@ -369,7 +369,7 @@ String GenerateAuthenticatePostData (String rfidTag, String password)
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateVisitorPostData (String rfidTag, String rfidTagsVisitors [])
+String GenerateVisitorPostData (String rfidTag, String rfidTagsVisitors [], String roomId)
 {
 
 	String aux = "{\n\t\"rfidTag\":\"";
@@ -383,7 +383,10 @@ String GenerateVisitorPostData (String rfidTag, String rfidTagsVisitors [])
 	}
 	aux.concat("\n\t\t\"");
 	aux.concat(rfidTagsVisitors[(sizeof(rfidTagsVisitors) / sizeof(rfidTagsVisitors[0])) - 1]);
-	aux.concat("\"\n\t]\n}");
+	aux.concat("\"\n\t],");
+	aux.concat("\n\t\"roomId\":\"");
+	aux.concat(roomId);
+	aux.concat("\"\n}");
 	return aux;
 }
 
