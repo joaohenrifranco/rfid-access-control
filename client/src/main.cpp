@@ -22,7 +22,7 @@
 #define MAX_VISITOR_NUM       					20
 #define SERIAL_SPEED          					9600
 #define MAC_ADDRESS       						{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
-#define SERVER_IP         						{192, 168, 88, 61}
+#define SERVER_IP         						{192, 168, 88, 41}
 #define REQUEST_UNLOCK    						"/api/request-unlock"
 #define AUTHENTICATE      						"/api/authenticate"
 #define AUTHORIZE_VISITOR 						"/api/authorize-visitor"
@@ -658,28 +658,19 @@ void setup()
  */
 void loop() 
 {
-	char entering_or_leaving = 'i';
-	String tag = "";
-	while (tag == "")
-	{
-		Serial.println("Approach your card");
-		delay(500);
-		tag = ReadRFIDTags(&entering_or_leaving);
-	}
-	Serial.print("Card tag: ");
-	Serial.println(tag);
-
 	/*  Full code for Arduino Client (still in development) */
 	String pw = "";
-	//String tag = "";
+	String tag = "";
 	byte status = 255;
 	String hashed = "";
 	String output = "";
 	char action = 'z';
 	char not_action = 'z';
 	String postData = "";
+	String employeeTag = "";
+	byte visitor_counter = 0;
 	String tagsArray [MAX_VISITOR_NUM];
-//	char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
+	char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
 
 	// Resets the tagsArray
 	for (byte i = 0; i < MAX_VISITOR_NUM; i++)
@@ -741,6 +732,8 @@ void loop()
 	// If needs password, blinks OK_COLOR and asks for typing
 	else if (status == PASSWORD_REQUIRED)
 	{
+		// Copies read tag to employee tag
+		employeeTag = String(strcpy(employeeTag.toCharArray, tag.toCharArray));
 		// Blinks DO_SOMETHING_COLOR
 		BlinkRGB(2, 250, BLACK, DO_SOMETHING_COLOR, action);
 		Serial.println("-- Waiting for password...");
@@ -785,9 +778,20 @@ void loop()
 			// If there are visitor tags
 			else
 			{
-				//
-				//	TODO: Generates POST for AUTHORIZE_VISITOR, gets response and unlocks door.
-				//
+				//	Generating POST data for visitors
+				Serial.println("-- Generating POST data...");
+				postData = GenerateVisitorPostData (employeeTag, tagsArray, WHO_AM_I);
+				Serial.println(postData);
+				//	Sending POST to visitors API
+				output = SendPostRequest(postData, AUTHORIZE_VISITOR);
+				Serial.print ("-- Server response: ");
+				Serial.println(output);
+				//	Parse response's status
+				status = ParseResponse(output);
+				Serial.print("-- Status: ");
+				Serial.println(status);
+				//	Unlocks door
+				UnlockDoor();
 			}
 		}
 		else
@@ -798,14 +802,15 @@ void loop()
 	}
 	else if (status == VISITOR_RFID_FOUND)
 	{
-		//
-		// TODO: Appends visitors' UID to tagsArray until UID belongs to employee.
-		//
+		if (visitor_counter < MAX_VISITOR_NUM)
+		{
+			tagsArray[visitor_counter] = tag;
+			visitor_counter++;
+		}
 	}
 	else
 	{
 		WriteRGB(ERROR_COLOR, action);
 		delay (5000);
 	}
-	//while(true);
 }
