@@ -733,7 +733,7 @@ void loop()
 	else if (status == PASSWORD_REQUIRED)
 	{
 		// Copies read tag to employee tag
-		employeeTag = String(strcpy(employeeTag.toCharArray, tag.toCharArray));
+		employeeTag = tag;
 		// Blinks DO_SOMETHING_COLOR
 		BlinkRGB(2, 250, BLACK, DO_SOMETHING_COLOR, action);
 		Serial.println("-- Waiting for password...");
