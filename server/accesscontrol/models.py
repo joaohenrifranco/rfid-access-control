@@ -1,5 +1,5 @@
 from django.db import models
-from .errors import *
+from .consts import *
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 #from django.db.models.signals import pre_save

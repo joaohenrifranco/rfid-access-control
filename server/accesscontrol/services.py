@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 
 from .models import *
-from .errors import *
+from .consts import *
 
 def get_current_tag_owner(rfid_tag):
     not_expired_users = User.objects.filter(rfidtaguserlink__expire_date__gte=datetime.date.today())
