@@ -17,7 +17,7 @@ class UserCreationForm(forms.ModelForm):
 
 	class Meta:
 		model = User
-		fields = ('first_name','last_name','email', 'cpf','access_level')
+		fields = ('first_name','last_name','email', 'cpf','access_level', 'sip')
 
 	def clean_password_conf_input(self):
 		# Check that the two password entries match
@@ -50,7 +50,7 @@ class UserChangeForm(forms.ModelForm):
 
 	class Meta:
 		model = User
-		fields = ('first_name','last_name','email', 'cpf','access_level')
+		fields = ('first_name','last_name','email', 'cpf','access_level','sip')
 
 	def clean_password_conf_input(self):
 		# Check that the two password entries match
@@ -85,13 +85,13 @@ class UserAdmin(BaseUserAdmin):
 	list_display = ('first_name','last_name','email', 'cpf','access_level')
 	list_filter = ('access_level', )
 	fieldsets = (
-		(None, {'fields': ('first_name','last_name','email', 'cpf','access_level', 'password_input', 'password_conf_input')}),
+		(None, {'fields': ('first_name','last_name','email', 'cpf','access_level', 'sip', 'password_input', 'password_conf_input')}),
 	)
 
 	add_fieldsets = (
 		(None, {
 			'classes': ('wide',),
-			'fields': ('first_name','last_name','email', 'cpf','access_level', 'password_input', 'password_conf_input')}
+			'fields': ('first_name','last_name','email', 'cpf','access_level', 'sip', 'password_input', 'password_conf_input')}
 		),
 	)
 	search_fields =  ('first_name','last_name','email', 'cpf','access_level',)

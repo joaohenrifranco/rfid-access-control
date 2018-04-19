@@ -37,6 +37,7 @@ class User(AbstractBaseUser):
   access_level = models.IntegerField(verbose_name=_("Access level"), choices=ACCESS_LEVEL_CHOICES, default='0')
   rfid_tag = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True, verbose_name=_("RFID Tag"))
   created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
+  sip = models.CharField(verbose_name=_("SIP"), max_length=3, unique=True, blank=True, null=True)
   
   objects = UserManager()
 
@@ -79,27 +80,27 @@ class Room(models.Model):
 class Event(models.Model):
   EVENT_TYPE_CHOICES = (
     (AUTHORIZED, _('Authorized')),
-    (RFID_NOT_FOUND, _('RFID Tag not found')),
+    (UNREGISTERED_RFID, _('Unregistered RFID tag')),
     (INSUFFICIENT_PRIVILEGES, _('Insufficient privileges')),
-    (WRONG_PASSWORD, _('Invalid password')),
+    (WRONG_PASSWORD, _('Wrong password')),
     (PASSWORD_REQUIRED, _('Password required')),
-    (VISITOR_RFID_FOUND, _('Visitor card indentified')),
+    (VISITOR_RFID_FOUND, _('Visitor RFID tag indentified')),
     (VISITOR_AUTHORIZED, _('Visitor authorized')),
-    (VISITOR_RFID_NOT_FOUND, _('Visitor RFID not found')),
+    (UNREGISTERED_VISITOR_RFID, _('Unregistered visitor RFID tag')),
     (OPEN_DOOR_TIMEOUT, _('Open door timeout')),
-    (UNKNOWN_ERROR, _('Unknown error')),
+    (UNEXPECTED_ERROR, _('Unexpected error')),
     (ROOM_NOT_FOUND, _('Room not found')),
+    (FRONT_DOOR_OPENED, _('Front door opened')),
+    (UNREGISTERED_SIP, _('Unregistered SIP')),
   )
 
-  READER_POSITION_CHOICES = (
-    (0, _('Outside')),
-    (1, _('Inside')),
-  )
+  READER_POSITION_CHOICES = ((0, _('Outside')),(1, _('Inside')))
 
   API_MODULE_CHOICES = (
     (AUTH_API, '/api/authenticate/'),
     (UNLOCK_API, '/api/request-unlock/'),
-    (VISITOR_API, '/api/authorize-visitor')
+    (VISITOR_API, '/api/authorize-visitor'),
+    (FRONT_DOOR_API, '/api/request-front-door-unlock'),
   )
 
   user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, blank=True, null=True, related_name='events', verbose_name=_("User"))
@@ -108,6 +109,7 @@ class Event(models.Model):
   reader_position = models.IntegerField(choices=READER_POSITION_CHOICES, verbose_name=_("Reader position"))
   api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None, verbose_name=_("Api Module"))
   rfid_tag_id = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name=_("RFID Tag ID"))
+  sip = models.CharField(verbose_name=_("SIP"), max_length=3, unique=True, blank=True, null=True)
   room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True, verbose_name=_("Room"))
   date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date ocurred"))
   visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True, verbose_name=_("Visitors"))

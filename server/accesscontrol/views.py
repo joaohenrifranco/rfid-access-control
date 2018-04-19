@@ -6,7 +6,7 @@ import datetime
 
 from .services import *
 from .models import *
-from .errors import *
+from .consts import *
 
 
 def index(request):
@@ -30,7 +30,7 @@ def request_unlock(request):
 
 		response = {}
 		log = Event()
-		log.rfid = request_rfid_tag
+		log.rfid_tag_id = request_rfid_tag
 		log.reader_position = request_action
 		log.date = datetime.datetime.now()
 		log.api_module = UNLOCK_API
@@ -45,13 +45,13 @@ def request_unlock(request):
 	
 			return JsonResponse(response)
 		except User.DoesNotExist:
-			log.event_type = RFID_NOT_FOUND
+			log.event_type = UNREGISTERED_RFID
 			log.rfids = {request_rfid_tag}
-			response['status'] = RFID_NOT_FOUND
+			response['status'] = UNREGISTERED_RFID
 			return JsonResponse(response)
 		except:
-			log.event_type = UNKNOWN_ERROR
-			response['status'] = UNKNOWN_ERROR
+			log.event_type = UNEXPECTED_ERROR
+			response['status'] = UNEXPECTED_ERROR
 			return JsonResponse(response)
 		finally:
 			log.save()
@@ -120,21 +120,21 @@ def authenticate(request):
 
 		log = Event()
 		log.reader_position = 0
-		log.rfid = request_rfid_tag
+		log.rfid_tag_id = request_rfid_tag
 		log.date = datetime.datetime.now()
 		log.api_module = AUTH_API
 		
 		try:
 			user = get_current_tag_owner(request_rfid_tag)
 		except User.DoesNotExist:
-			log.event_type = RFID_NOT_FOUND
+			log.event_type = UNREGISTERED_RFID
 
-			response['status'] =  RFID_NOT_FOUND
+			response['status'] =  UNREGISTERED_RFID
 			return JsonResponse(response)
 		except:
-			log.event_type = UNKNOWN_ERROR
+			log.event_type = UNEXPECTED_ERROR
 
-			response['status'] = UNKNOWN_ERROR
+			response['status'] = UNEXPECTED_ERROR
 			return JsonResponse(response)
 		finally:
 			log.save()
@@ -169,7 +169,7 @@ def authorize_visitor(request):
 		response = {}
 
 		log = Event()
-		log.rfid = request_rfid_tag
+		log.rfid_tag_id = request_rfid_tag
 		log.date = datetime.datetime.now()
 		log.reader_position = 0
 		log.api_module = VISITOR_API
@@ -178,9 +178,9 @@ def authorize_visitor(request):
 			room = Room.objects.get(name=request_room_id)
 			user = get_current_tag_owner(request_rfid_tag)
 		except User.DoesNotExist:
-			log.event_type = RFID_NOT_FOUND
+			log.event_type = UNREGISTERED_RFID
 
-			response['status'] =  RFID_NOT_FOUND
+			response['status'] =  UNREGISTERED_RFID
 			return JsonResponse(response)
 		except:
 			log.event_type = ROOM_NOT_FOUND
@@ -203,10 +203,10 @@ def authorize_visitor(request):
 			try:
 				visitor_list.append(get_current_tag_owner(visitor_rfid))
 			except:
-				log.event_type = VISITOR_RFID_NOT_FOUND
+				log.event_type = UNREGISTERED_VISITOR_RFID
 				log.save()
 
-				response['status'] = VISITOR_RFID_NOT_FOUND
+				response['status'] = UNREGISTERED_VISITOR_RFID
 				return JsonResponse(response)
 
 		log.save()
@@ -215,4 +215,49 @@ def authorize_visitor(request):
 		log.save()
 		
 		response['status'] = VISITOR_AUTHORIZED
+		return JsonResponse(response)
+
+def request_front_door_unlock(request):
+	if request.method == 'GET':
+		return index(request)
+	
+	elif request.method == 'POST':
+
+		try:
+			data = json.loads(request.body)
+			request_sip_id = data['sip']
+		except:
+			return malformed_post()
+
+		response = {}
+
+		log = Event()
+		log.sip = request_sip_id
+		log.date = datetime.datetime.now()
+		log.reader_position = 0
+		log.api_module = FRONT_DOOR_API
+
+		try:
+			user = User.objects.get(sip=request_sip_id)
+		except User.DoesNotExist:
+			log.event_type = UNREGISTERED_SIP
+			response['status'] =  UNREGISTERED_SIP
+			return JsonResponse(response)
+		except:
+			log.event_type = UNEXPECTED_ERROR
+			response['status'] = UNEXPECTED_ERROR
+			return JsonResponse(response)
+		finally:
+			log.save()
+		
+		log.user = user
+		
+		if (user.access_level == 0): 
+			response['status'] = INSUFFICIENT_PRIVILEGES
+			return JsonResponse(response)
+
+		log.event_type = FRONT_DOOR_OPENED
+		log.save()
+		
+		response['status'] = FRONT_DOOR_OPENED
 		return JsonResponse(response)
