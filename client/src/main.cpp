@@ -13,6 +13,7 @@
 #include <Keypad.h>
 #include <sha256.h>
 #include <ArduinoJson.h>
+#include <ArduinoHttpClient.h>
 
 /*
  *  Macros
@@ -110,8 +111,9 @@ MFRC522 readers [NUM_READERS];
 // ;
 // #else
 byte mac[] = MAC_ADDRESS;
-
 EthernetClient ethClient;
+IPAddress serverIP(SERVER_IP);
+HttpClient httpClient = HttpClient(ethClient, serverIP, REQUEST_PORT);
 
 /*
  *  Declaring and initializing the keypad (4x3)
@@ -235,6 +237,47 @@ String ReadRFIDTags (char *entering_or_leaving)
 }
 
 /*
+ *	void Buzz (bool activate);
+ *
+ *  Description:
+ *  - Switches buzzer on or off
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] bool activate: tells if it should be switched on or off
+ *
+ *  Returns:
+ *  -
+ */
+void Buzz (bool activate)
+{
+	digitalWrite(PIN_BUZZER, activate);
+}
+
+/*
+ *	Build description (TODO)
+ */
+void BlinkBuzzer (byte n_times, byte delay_time)
+{
+	for (byte i = 0; i < n_times; i ++)
+	{
+		Buzz(true);
+		delay(delay_time);
+		Buzz(false);
+		delay(delay_time);
+	}
+}
+
+/*
+ *	Build description (TODO)
+ */
+void BuzzTimer (byte delayTime)
+{
+	Buzz(true);
+	delay(delayTime);
+	Buzz(false);
+}
+
+/*
  *  String GetPassword ();
  *
  *  Description:
@@ -253,11 +296,15 @@ String GetPassword ()
 	char c = keyPad.getKey();
 	while (c != END_OF_PASSWORD)
 	{
-		BlinkRGB(1, 75, BLACK, DO_SOMETHING_COLOR, 'o');
 		if (c == QUIT_TYPING)
+		{
+			BlinkBuzzer(3, 50);
 			return "";
+		}
 		if (c)
 		{
+			BlinkRGB(1, 75, BLACK, DO_SOMETHING_COLOR, 'o');
+			BlinkBuzzer(1, 50);
 			aux.concat(c);
 		}
 		c = keyPad.getKey();
@@ -337,7 +384,7 @@ String GenerateUnlockPostData (String uid, String roomID, byte readerPosition)
 }
 
 /*
- *  String GenerateAuthenticatePostData (String uid, String password);
+ *  String GenerateAuthenticatePostData (String uid, String password, String roomID);
  *
  *  Description:
  *  - Generates a JSON format text to send through HTTP POST to REQUEST_UNLOCK
@@ -349,12 +396,14 @@ String GenerateUnlockPostData (String uid, String roomID, byte readerPosition)
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateAuthenticatePostData (String uid, String password)
+String GenerateAuthenticatePostData (String uid, String password, String roomID)
 {
 	String aux = "{\n\t\"uid\":\"";
 	aux.concat(uid);
 	aux.concat("\",\n\t\"password\":\"");
-	aux.concat(String(password));
+	aux.concat(password);
+	aux.concat("\",\n\t\"roomID\":\"");
+	aux.concat(roomID);
 	aux.concat("\"\n}");
 	return aux;
 }
@@ -411,50 +460,24 @@ byte SendPostRequest(String postData, String requestFrom)
 	digitalWrite(SS_PIN_ETHERNET, LOW);
 	digitalWrite(SS_PIN_OUTSIDE, HIGH);
 	digitalWrite(SS_PIN_INSIDE, HIGH);
+	String response = "";
 	byte output = 255;
-	IPAddress serverIP(SERVER_IP);
 	IPAddress myIP(Ethernet.localIP());
-	int requestPort = REQUEST_PORT;
-	int connection = ethClient.connect(serverIP, requestPort);
-	Serial.print("Connection: ");
-	Serial.println(connection);
-	if (connection)
-	{
-		ethClient.print("POST ");
-		ethClient.print(requestFrom);
-		ethClient.println(" HTTP/1.1");
-		ethClient.println("Content-Type: application/json;");
-		ethClient.println("Connection: close");
-		ethClient.println("User-Agent: Arduino/1.0");
-		ethClient.print("Content-Length: ");
-		ethClient.println(postData.length());
-		ethClient.println();
-		ethClient.println(postData);
-		ethClient.println();
-		// output = ethClient.readString();
-		// Serial.print("out: ");
-		// Serial.println(output);
-		char status[32] = {0};
-		ethClient.readBytesUntil('\r', status, sizeof(status));
-		if (strcmp(status, "HTTP/1.1 200 OK") != 0) {
-			Serial.print(F("Unexpected response: "));
-			Serial.println(status);
-			return 255;
-		}
-		char endOfHeaders[] = "\r\n\r\n";
-		if (!ethClient.find(endOfHeaders)) {
-			Serial.println(F("Invalid response"));
-			return 255;
-		}
-		const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
-		DynamicJsonBuffer jsonBuffer(capacity);
-		JsonObject& root = jsonBuffer.parseObject(ethClient);
-		if (!root.success()) {
-			Serial.println(F("Parsing failed!"));
-			return 255;
-		}
-		output = root["status"];
+	String contentType = "application/json";
+	Serial.println("Sending post...");
+	httpClient.post(requestFrom, contentType, postData);
+	Serial.println("POST done!");
+	response = httpClient.responseBody();
+	Serial.print("Response: ");
+	Serial.println(response);
+	const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+	DynamicJsonBuffer jsonBuffer(capacity);
+	JsonObject& root = jsonBuffer.parseObject(response);
+	if (!root.success()) {
+		Serial.println(F("Parsing failed!"));
+		return 255;
 	}
+	output = root["status"];
 	ethClient.stop();
 	return output;
 }
@@ -553,23 +576,6 @@ bool DoorOpened ()
 		measures[i] = digitalRead(PIN_SENSOR);
 	}
 	return BooleanMode(measures);
-}
-
-/*
- *	void Buzz (bool activate);
- *
- *  Description:
- *  - Switches buzzer on or off
- *
- *  Inputs/Outputs:
- *  [INPUT] bool activate: tells if it should be switched on or off
- *
- *  Returns:
- *  -
- */
-void Buzz (bool activate)
-{
-	digitalWrite(PIN_BUZZER, activate);
 }
 
 /*
@@ -774,6 +780,13 @@ void loop()
 		pw = GetPassword();
 		Serial.print("-- Password: ");
 		Serial.println(pw);
+		if (pw == "")
+		{
+			WriteRGB(ERROR_COLOR, readerPosition);
+			BuzzTimer(200);
+			delay(5000);
+			return;
+		}
 		// Blinks WAITING_COLOR once password is read
 		BlinkRGB(2, 250, BLACK, WAITING_COLOR, readerPosition);
 		// Hashes password
@@ -783,7 +796,7 @@ void loop()
 		Serial.println(hashed);
 		// Generates POST data for AUTHENTICATE API
 		Serial.println("-- Generating POST data...");
-		postData = GenerateAuthenticatePostData(tag, hashed);
+		postData = GenerateAuthenticatePostData(tag, hashed, WHO_AM_I);
 		Serial.println(postData);
 		// Sends POST data to AUTHENTICATE API
 		status = SendPostRequest(postData, AUTHENTICATE);
@@ -795,14 +808,8 @@ void loop()
 			// Checks if there's any visitor on tagsArray
 			if (tagsArray[0] == "")
 			{
-				UnlockDoor();
 				WriteRGB(OK_COLOR, readerPosition);
-				//
-				//
-				//	REMOVE DELAY (or reduce it)
-				//
-				//
-				delay(5000);
+				UnlockDoor();
 			}
 			// If there are visitor tags
 			else
