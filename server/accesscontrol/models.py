@@ -113,3 +113,6 @@ class Event(models.Model):
   room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True, verbose_name=_("Room"))
   date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date ocurred"))
   visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True, verbose_name=_("Visitors"))
+
+  def __str__(self):
+    return (self.get_event_type_display() + " - " + self.date.strftime("%Y-%m-%d %H:%M:%S"))
