@@ -35,7 +35,6 @@ class UserCreationForm(forms.ModelForm):
 			user.save()
 		return user
 
-
 class UserChangeForm(forms.ModelForm):
 	password_input = forms.CharField(
 		label=_('Password'), 
@@ -104,12 +103,9 @@ class EventAdmin(admin.ModelAdmin):
 	list_filter = ['date','user', 'room', 'event_type', 'reader_position']
 
 	def get_readonly_fields(self, request, obj=None):
-		if self.declared_fieldsets:
-			fields = flatten_fieldsets(self.declared_fieldsets)
-		else:
-			form = self.get_formset(request, obj).form
-			fields = form.base_fields.keys()
-		return fields
+		return list(self.readonly_fields) + \
+			[field.name for field in obj._meta.fields] + \
+			[field.name for field in obj._meta.many_to_many]
 	
 	def has_add_permission(self, request):
 		# Nobody is allowed to add

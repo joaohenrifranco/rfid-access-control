@@ -3,11 +3,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
 import datetime
-
-from .services import *
-from .models import *
-from .consts import *
-
+from accesscontrol.services import *
+from accesscontrol.models import *
+from accesscontrol.consts import *
 
 def index(request):
 	return HttpResponse("Access control api is online! It is accessible through POST requests.")
@@ -18,36 +16,32 @@ def request_unlock(request):
 		return index(request)
 	
 	elif request.method == 'POST':
-
-		# Tries to parse json post body
 		try:
 			data = json.loads(request.body)
-			request_rfid_tag = data['rfidTag']
-			request_room_id = data['roomId']
-			request_action = data['action']
+			request_uid = data['uid']
+			request_room_id = data['roomID']
+			request_reader_position = data['readerPosition']
 		except:
 			return malformed_post()
 
 		response = {}
 		log = Event()
-		log.rfid_tag_id = request_rfid_tag
-		log.reader_position = request_action
+		log.uid = request_uid
+		log.reader_position = request_reader_position
 		log.date = datetime.datetime.now()
 		log.api_module = UNLOCK_API
 
-		# Tries to get user and room from database with request info. Logs errors.
 		try:
-			user = get_current_tag_owner(request_rfid_tag)
+			user = get_current_tag_owner(request_uid)
 			room = Room.objects.get(name=request_room_id)
 		except Room.DoesNotExist:
 			log.event_type = ROOM_NOT_FOUND
 			response['status'] =  ROOM_NOT_FOUND
-	
 			return JsonResponse(response)
 		except User.DoesNotExist:
-			log.event_type = UNREGISTERED_RFID
-			log.rfids = {request_rfid_tag}
-			response['status'] = UNREGISTERED_RFID
+			log.event_type = UNREGISTERED_UID
+			log.uids = {request_uid}
+			response['status'] = UNREGISTERED_UID
 			return JsonResponse(response)
 		except:
 			log.event_type = UNEXPECTED_ERROR
@@ -55,27 +49,25 @@ def request_unlock(request):
 			return JsonResponse(response)
 		finally:
 			log.save()
-
 		
-		# Now a user and a room can be attributted to the log
 		log.room = room
 		log.user = user
 		log.save()
 
 		# Always unlock door on exit
-		if (request_action == 1):
+		if (request_reader_position == 1):
 			log.event_type = AUTHORIZED
 			log.save()
 
 			response['status'] = AUTHORIZED
 			return JsonResponse(response)
 
-		# Checks if RFID is from a visitor
+		# Checks if UID is from a visitor
 		if (user.access_level == 0):
-			log.event_type = VISITOR_RFID_FOUND
+			log.event_type = VISITOR_UID_FOUND
 			log.save()
 			
-			response['status'] = VISITOR_RFID_FOUND
+			response['status'] = VISITOR_UID_FOUND
 			return JsonResponse(response)
 
 		# Checks if permission should be denied
@@ -112,7 +104,7 @@ def authenticate(request):
 		try:
 			data = json.loads(request.body)
 			request_password = data['password']
-			request_rfid_tag = data['rfidTag']
+			request_uid = data['uid']
 		except:
 			return malformed_post()
 				
@@ -120,16 +112,17 @@ def authenticate(request):
 
 		log = Event()
 		log.reader_position = 0
-		log.rfid_tag_id = request_rfid_tag
+		log.uid = request_uid
 		log.date = datetime.datetime.now()
 		log.api_module = AUTH_API
+
 		
 		try:
-			user = get_current_tag_owner(request_rfid_tag)
+			user = get_current_tag_owner(request_uid)
 		except User.DoesNotExist:
-			log.event_type = UNREGISTERED_RFID
+			log.event_type = UNREGISTERED_UID
 
-			response['status'] =  UNREGISTERED_RFID
+			response['status'] =  UNREGISTERED_UID
 			return JsonResponse(response)
 		except:
 			log.event_type = UNEXPECTED_ERROR
@@ -139,7 +132,7 @@ def authenticate(request):
 		finally:
 			log.save()
 
-		if (not check_password()):
+		if (not check_password(user, request_password)):
 			log.event_type = WRONG_PASSWORD
 			response['status'] = WRONG_PASSWORD
 			return JsonResponse(response)
@@ -160,27 +153,27 @@ def authorize_visitor(request):
 		request_visitor_array = []
 		try:
 			data = json.loads(request.body)
-			request_rfid_tag = data['rfidTag']
-			request_visitor_array = data['rfidTagsVisitors']
-			request_room_id = data['roomId']
+			request_uid = data['uid']
+			request_visitor_array = data['visitorsUids']
+			request_room_id = data['roomID']
 		except:
 			return malformed_post()
 
 		response = {}
 
 		log = Event()
-		log.rfid_tag_id = request_rfid_tag
+		log.uid = request_uid
 		log.date = datetime.datetime.now()
 		log.reader_position = 0
 		log.api_module = VISITOR_API
 
 		try:
 			room = Room.objects.get(name=request_room_id)
-			user = get_current_tag_owner(request_rfid_tag)
+			user = get_current_tag_owner(request_uid)
 		except User.DoesNotExist:
-			log.event_type = UNREGISTERED_RFID
+			log.event_type = UNREGISTERED_UID
 
-			response['status'] =  UNREGISTERED_RFID
+			response['status'] =  UNREGISTERED_UID
 			return JsonResponse(response)
 		except:
 			log.event_type = ROOM_NOT_FOUND
@@ -199,14 +192,14 @@ def authorize_visitor(request):
 
 		visitor_list = []
 
-		for visitor_rfid in request_visitor_array:
+		for visitor_uid in request_visitor_array:
 			try:
-				visitor_list.append(get_current_tag_owner(visitor_rfid))
+				visitor_list.append(get_current_tag_owner(visitor_uid))
 			except:
-				log.event_type = UNREGISTERED_VISITOR_RFID
+				log.event_type = UNREGISTERED_VISITOR_UID
 				log.save()
 
-				response['status'] = UNREGISTERED_VISITOR_RFID
+				response['status'] = UNREGISTERED_VISITOR_UID
 				return JsonResponse(response)
 
 		log.save()
