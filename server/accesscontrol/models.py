@@ -35,7 +35,7 @@ class User(AbstractBaseUser):
   last_name = models.CharField(verbose_name=_("Last name"), max_length=200)
   cpf = models.CharField(verbose_name=_("CPF"), max_length=11, unique=True)
   access_level = models.IntegerField(verbose_name=_("Access level"), choices=ACCESS_LEVEL_CHOICES, default='0')
-  uid = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True, verbose_name=_("RFID Tag UID"))
+  rfid_tag = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True, verbose_name=_("RFID Tag UID"))
   created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
   sip = models.CharField(verbose_name=_("SIP"), max_length=3, unique=True, blank=True, null=True)
   
@@ -105,7 +105,7 @@ class Event(models.Model):
 
   user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, blank=True, null=True, related_name='events', verbose_name=_("User"))
   
-  event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, verbose_name=_("Event type"))
+  event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, null=True, verbose_name=_("Event type"))
   reader_position = models.IntegerField(choices=READER_POSITION_CHOICES, verbose_name=_("Reader position"))
   api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None, verbose_name=_("Api Module"))
   uid = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name=_("RFID Tag UID"))
