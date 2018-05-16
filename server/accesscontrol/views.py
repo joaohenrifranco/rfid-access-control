@@ -139,7 +139,7 @@ def authenticate(request):
 		finally:
 			log.save()
 
-		if (not check_password()):
+		if (not check_password(user, request_password)):
 			log.event_type = WRONG_PASSWORD
 			response['status'] = WRONG_PASSWORD
 			return JsonResponse(response)
