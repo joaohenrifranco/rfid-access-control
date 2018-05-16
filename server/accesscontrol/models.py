@@ -15,10 +15,10 @@ ACCESS_LEVEL_CHOICES = (
 )
 
 class RfidTag(models.Model):
-  rfid_tag_id = models.CharField(verbose_name=_("RFID Tag ID"), max_length=8, default=None, unique=True)
+  uid = models.CharField(verbose_name=_("RFID Tag UID"), max_length=8, default=None, unique=True)
   created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
   def __str__(self):
-    return self.rfid_tag_id.upper()
+    return self.uid
 
 class UserManager(BaseUserManager):
   def create_user(self, email, date_added=None, password=None):
@@ -35,7 +35,7 @@ class User(AbstractBaseUser):
   last_name = models.CharField(verbose_name=_("Last name"), max_length=200)
   cpf = models.CharField(verbose_name=_("CPF"), max_length=11, unique=True)
   access_level = models.IntegerField(verbose_name=_("Access level"), choices=ACCESS_LEVEL_CHOICES, default='0')
-  rfid_tag = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True, verbose_name=_("RFID Tag"))
+  uid = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True, verbose_name=_("RFID Tag UID"))
   created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
   sip = models.CharField(verbose_name=_("SIP"), max_length=3, unique=True, blank=True, null=True)
   
@@ -59,7 +59,7 @@ class RfidTagUserLink(models.Model):
   expire_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Expire date"))
   
   def __str__(self):
-    return (self.rfid_tag.rfid_tag_id + " - " + self.user.get_full_name())
+    return (self.rfid_tag.uid + " - " + self.user.get_full_name())
 
   # def rfid_tag_user_link_pre_save(sender, instance, *args, **kwargs):
   #   # TODO: DEACTIVATE OTHER ENTRIS WITH SAME RFID TAG LINK
@@ -80,17 +80,17 @@ class Room(models.Model):
 class Event(models.Model):
   EVENT_TYPE_CHOICES = (
     (AUTHORIZED, _('Authorized')),
-    (UNREGISTERED_RFID, _('Unregistered RFID tag')),
-    (INSUFFICIENT_PRIVILEGES, _('Insufficient privileges')),
-    (WRONG_PASSWORD, _('Wrong password')),
-    (PASSWORD_REQUIRED, _('Password required')),
-    (VISITOR_RFID_FOUND, _('Visitor RFID tag indentified')),
-    (VISITOR_AUTHORIZED, _('Visitor authorized')),
-    (UNREGISTERED_VISITOR_RFID, _('Unregistered visitor RFID tag')),
-    (OPEN_DOOR_TIMEOUT, _('Open door timeout')),
-    (UNEXPECTED_ERROR, _('Unexpected error')),
-    (ROOM_NOT_FOUND, _('Room not found')),
-    (FRONT_DOOR_OPENED, _('Front door opened')),
+    (UNREGISTERED_UID, _('Unregistered Tag')),
+    (INSUFFICIENT_PRIVILEGES, _('Insufficient Privileges')),
+    (WRONG_PASSWORD, _('Wrong Password')),
+    (PASSWORD_REQUIRED, _('Password Required')),
+    (VISITOR_UID_FOUND, _('Visitor Tag Indentified')),
+    (VISITOR_AUTHORIZED, _('Visitor Authorized')),
+    (UNREGISTERED_VISITOR_UID, _('Unregistered Visitor Tag')),
+    (OPEN_DOOR_TIMEOUT, _('Open Door Timeout')),
+    (UNEXPECTED_ERROR, _('Unexpected Error')),
+    (ROOM_NOT_FOUND, _('Room Not Found')),
+    (FRONT_DOOR_OPENED, _('Front Door Opened')),
     (UNREGISTERED_SIP, _('Unregistered SIP')),
   )
 
@@ -105,10 +105,10 @@ class Event(models.Model):
 
   user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, blank=True, null=True, related_name='events', verbose_name=_("User"))
   
-  event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, default=LOGGING_ERROR, verbose_name=_("Event type"))
+  event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, verbose_name=_("Event type"))
   reader_position = models.IntegerField(choices=READER_POSITION_CHOICES, verbose_name=_("Reader position"))
   api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None, verbose_name=_("Api Module"))
-  rfid_tag_id = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name=_("RFID Tag ID"))
+  uid = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name=_("RFID Tag UID"))
   sip = models.CharField(verbose_name=_("SIP"), max_length=3, unique=True, blank=True, null=True)
   room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True, verbose_name=_("Room"))
   date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date ocurred"))

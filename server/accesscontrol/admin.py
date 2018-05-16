@@ -35,7 +35,6 @@ class UserCreationForm(forms.ModelForm):
 			user.save()
 		return user
 
-
 class UserChangeForm(forms.ModelForm):
 	password_input = forms.CharField(
 		label=_('Password'), 
