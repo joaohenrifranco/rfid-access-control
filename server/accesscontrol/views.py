@@ -105,6 +105,7 @@ def authenticate(request):
 			data = json.loads(request.body)
 			request_password = data['password']
 			request_uid = data['uid']
+			request_room_id = data['roomID']
 		except:
 			return malformed_post()
 				
@@ -115,30 +116,36 @@ def authenticate(request):
 		log.uid = request_uid
 		log.date = datetime.datetime.now()
 		log.api_module = AUTH_API
-
 		
 		try:
 			user = get_current_tag_owner(request_uid)
+			room = Room.objects.get(name=request_room_id)
+		except Room.DoesNotExist:
+			log.event_type = ROOM_NOT_FOUND
+			response['status'] =  ROOM_NOT_FOUND
+			return JsonResponse(response)
 		except User.DoesNotExist:
 			log.event_type = UNREGISTERED_UID
-
 			response['status'] =  UNREGISTERED_UID
 			return JsonResponse(response)
 		except:
 			log.event_type = UNEXPECTED_ERROR
-
 			response['status'] = UNEXPECTED_ERROR
 			return JsonResponse(response)
 		finally:
 			log.save()
 
+		log.user = user
+		log.room = room
+		log.save()
+
 		if (not check_password(user, request_password)):
 			log.event_type = WRONG_PASSWORD
 			response['status'] = WRONG_PASSWORD
+			log.save()
 			return JsonResponse(response)
 
 		log.event_type = AUTHORIZED
-		
 		response['status'] = AUTHORIZED
 		
 		return JsonResponse(response)
