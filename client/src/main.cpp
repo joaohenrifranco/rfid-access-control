@@ -12,6 +12,7 @@
 #include <Ethernet.h>
 #include <Keypad.h>
 #include <sha256.h>
+#include <ArduinoJson.h>
 
 /*
  *  Macros
@@ -22,7 +23,7 @@
 #define MAX_VISITOR_NUM       					20
 #define SERIAL_SPEED          					9600
 #define MAC_ADDRESS       						{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
-#define SERVER_IP         						{192, 168, 88, 41}
+#define SERVER_IP         						{192, 168, 88, 64}
 #define REQUEST_UNLOCK    						"/api/request-unlock"
 #define AUTHENTICATE      						"/api/authenticate"
 #define AUTHORIZE_VISITOR 						"/api/authorize-visitor"
@@ -46,6 +47,7 @@ byte WHITE [] =									{HIGH, HIGH, HIGH};
 #define ERROR_COLOR								RED
 #define STANDBY_COLOR							WHITE
 #define DO_SOMETHING_COLOR						BLUE
+#define DOOR_UNLOCK_TIME						2000
 
 /*
  *	Server Error Codes
@@ -73,6 +75,7 @@ byte WHITE [] =									{HIGH, HIGH, HIGH};
 #define LED_OUT_B								46
 #define PIN_SENSOR								48
 #define PIN_BUZZER								26
+#define DOOR_PIN								28
 #define RST_PIN									30
 #define KEYPAD_LIN_PINS							{37, 39, 41, 43}
 #define KEYPAD_COL_PINS							{45, 47, 49}
@@ -147,28 +150,28 @@ void WriteRGB (byte color[], char inside_outside)
 }
 
 /*
- *	void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char action);
+ *	void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char readerPosition);
  *
  *  Description:
- *  - Blinks RGB LED in "action" from "blink_color" to "end_color" "n_times" times within a "delay_time" time
+ *  - Blinks RGB LED in "readerPosition" from "blink_color" to "end_color" "n_times" times within a "delay_time" time
  *
  *  Inputs/Outputs:
  *  [INPUT] byte n_times: number of times the LED will blink
  * 	[INPUT] byte delay_time: time between blinks
  *  [INPUT] byte blink_color []: the LED color when blinking
  *  [INPUT] byte end_color []: the LED color when it ends
- *  [INPUT] char action: which LED should blink
+ *  [INPUT] char readerPosition: which LED should blink
  *
  *  Returns:
  *  -
  */
-void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char action)
+void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char readerPosition)
 {
 	for (byte i = 0; i < n_times; i ++)
 	{
-		WriteRGB(blink_color, action);
+		WriteRGB(blink_color, readerPosition);
 		delay(delay_time);
-		WriteRGB(end_color, action);
+		WriteRGB(end_color, readerPosition);
 		delay(delay_time);
 	}
 }
@@ -308,48 +311,48 @@ String HashedPassword (String password)
 }
 
 /*
- *  String GenerateUnlockPostData (String rfidTag, byte roomId, byte action);
+ *  String GenerateUnlockPostData (String uid, byte roomID, byte readerPosition);
  *
  *  Description:
  *  - Generates a JSON format text to send through HTTP POST to REQUEST_UNLOCK
  *
  *  Inputs/Outputs:
- *  [INPUT] String rfidTag: the RFID Tag read by RFID module
- *  [INPUT] byte roomId: the ID of the room where this client is
- *  [INPUT] byte action: indicates if the person is entering or leaving the room
+ *  [INPUT] String uid: the RFID Tag read by RFID module
+ *  [INPUT] byte roomID: the ID of the room where this client is
+ *  [INPUT] byte readerPosition: indicates if the person is entering or leaving the room
  *
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateUnlockPostData (String rfidTag, String roomId, byte action)
+String GenerateUnlockPostData (String uid, String roomID, byte readerPosition)
 {
-	String aux = "{\n\t\"rfidTag\":\"";
-	aux.concat(rfidTag);
-	aux.concat("\",\n\t\"roomId\":\"");
-	aux.concat(roomId);
-	aux.concat("\",\n\t\"action\":");
-	aux.concat(String(action));
+	String aux = "{\n\t\"uid\":\"";
+	aux.concat(uid);
+	aux.concat("\",\n\t\"roomID\":\"");
+	aux.concat(roomID);
+	aux.concat("\",\n\t\"readerPosition\":");
+	aux.concat(String(readerPosition));
 	aux.concat("\n}");
 	return aux;
 }
 
 /*
- *  String GenerateAuthenticatePostData (String rfidTag, String password);
+ *  String GenerateAuthenticatePostData (String uid, String password);
  *
  *  Description:
  *  - Generates a JSON format text to send through HTTP POST to REQUEST_UNLOCK
  *
  *  Inputs/Outputs:
- *  [INPUT] String rfidTag: the RFID Tag read by RFID module
+ *  [INPUT] String uid: the RFID Tag read by RFID module
  *	[INPUT] String password: the user's read password
  *
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateAuthenticatePostData (String rfidTag, String password)
+String GenerateAuthenticatePostData (String uid, String password)
 {
-	String aux = "{\n\t\"rfidTag\":\"";
-	aux.concat(rfidTag);
+	String aux = "{\n\t\"uid\":\"";
+	aux.concat(uid);
 	aux.concat("\",\n\t\"password\":\"");
 	aux.concat(String(password));
 	aux.concat("\"\n}");
@@ -357,41 +360,41 @@ String GenerateAuthenticatePostData (String rfidTag, String password)
 }
 
 /*
- *  String GenerateVisitorPostData (String rfidTag, String rfidTagsVisitors []);
+ *  String GenerateVisitorPostData (String uid, String visitorsUids []);
  *
  *  Description:
  *  - Generates a JSON format text to send through HTTP POST to AUTHORIZE_VISITOR
  *
  *  Inputs/Outputs:
- *  [INPUT] String rfidTag: an employee RFID
- *	[INPUT] String rfidTagsVisitors []: an array with all the visitors' RFIDs
+ *  [INPUT] String uid: an employee RFID
+ *	[INPUT] String visitorsUids []: an array with all the visitors' RFIDs
  *
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateVisitorPostData (String rfidTag, String rfidTagsVisitors [], String roomId)
+String GenerateVisitorPostData (String uid, String visitorsUids [], String roomID)
 {
 
-	String aux = "{\n\t\"rfidTag\":\"";
-	aux.concat(rfidTag);
-	aux.concat("\",\n\t\"rfidTagsVisitors\":[");
-	for (byte i = 0; i < ((sizeof(rfidTagsVisitors) / sizeof(rfidTagsVisitors[0])) - 1); i++)
+	String aux = "{\n\t\"uid\":\"";
+	aux.concat(uid);
+	aux.concat("\",\n\t\"visitorsUids\":[");
+	for (byte i = 0; i < ((sizeof(visitorsUids) / sizeof(visitorsUids[0])) - 1); i++)
 	{
 		aux.concat("\n\t\t\"");
-		aux.concat(rfidTagsVisitors[i]);
+		aux.concat(visitorsUids[i]);
 		aux.concat("\",");
 	}
 	aux.concat("\n\t\t\"");
-	aux.concat(rfidTagsVisitors[(sizeof(rfidTagsVisitors) / sizeof(rfidTagsVisitors[0])) - 1]);
+	aux.concat(visitorsUids[(sizeof(visitorsUids) / sizeof(visitorsUids[0])) - 1]);
 	aux.concat("\"\n\t],");
-	aux.concat("\n\t\"roomId\":\"");
-	aux.concat(roomId);
+	aux.concat("\n\t\"roomID\":\"");
+	aux.concat(roomID);
 	aux.concat("\"\n}");
 	return aux;
 }
 
 /*
- *  String SendPostRequest (String postData, String requestFrom);
+ *  byte SendPostRequest (String postData, String requestFrom);
  *
  *  Description:
  *  - Does a POST Request
@@ -401,14 +404,14 @@ String GenerateVisitorPostData (String rfidTag, String rfidTagsVisitors [], Stri
  *  [INPUT] String requestFrom: the API URL
  *
  *  Returns:
- *  [String] The server's response
+ *  [byte] The server's response status
  */
-String SendPostRequest(String postData, String requestFrom)
+byte SendPostRequest(String postData, String requestFrom)
 {
 	digitalWrite(SS_PIN_ETHERNET, LOW);
 	digitalWrite(SS_PIN_OUTSIDE, HIGH);
 	digitalWrite(SS_PIN_INSIDE, HIGH);
-	String output = "";
+	byte output = 255;
 	IPAddress serverIP(SERVER_IP);
 	IPAddress myIP(Ethernet.localIP());
 	int requestPort = REQUEST_PORT;
@@ -428,9 +431,29 @@ String SendPostRequest(String postData, String requestFrom)
 		ethClient.println();
 		ethClient.println(postData);
 		ethClient.println();
-		output = ethClient.readString();
-		Serial.print("out: ");
-		Serial.println(output);
+		// output = ethClient.readString();
+		// Serial.print("out: ");
+		// Serial.println(output);
+		char status[32] = {0};
+		ethClient.readBytesUntil('\r', status, sizeof(status));
+		if (strcmp(status, "HTTP/1.1 200 OK") != 0) {
+			Serial.print(F("Unexpected response: "));
+			Serial.println(status);
+			return 255;
+		}
+		char endOfHeaders[] = "\r\n\r\n";
+		if (!ethClient.find(endOfHeaders)) {
+			Serial.println(F("Invalid response"));
+			return 255;
+		}
+		const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+		DynamicJsonBuffer jsonBuffer(capacity);
+		JsonObject& root = jsonBuffer.parseObject(ethClient);
+		if (!root.success()) {
+			Serial.println(F("Parsing failed!"));
+			return 255;
+		}
+		output = root["status"];
 	}
 	ethClient.stop();
 	return output;
@@ -451,24 +474,37 @@ String SendPostRequest(String postData, String requestFrom)
 byte ParseResponse (String response)
 {
 	byte status = 255;
-	String status_str = "";
-	char cResponse [200];
-	response.toCharArray(cResponse, 200);
-	char *teste = strstr(cResponse, "status");
-	for (byte i = 0; i < strlen(teste); i++)
+	StaticJsonBuffer<500> jsonBuffer;
+	JsonObject& root = jsonBuffer.parseObject(response);
+	if (!root.success())
 	{
-		if (teste[i] == '}')
-			break;
-		if ((teste[i] >= '0') && (teste[i] <= '9'))
-		{
-			status_str.concat(teste[i]);
-		}
+		Serial.println("Parsing response failed!");
+		return 255;
 	}
-	//Serial.print("DEBUG: ");
-	//Serial.println(status_str);
-	if (status_str != "")
-		status = status_str.toInt();
-	return status;
+	else
+	{
+		status = root["status"];
+		return status;
+	}
+	// byte status = 255;
+	// String status_str = "";
+	// char cResponse [200];
+	// response.toCharArray(cResponse, 200);
+	// char *teste = strstr(cResponse, "status");
+	// for (byte i = 0; i < strlen(teste); i++)
+	// {
+	// 	if (teste[i] == '}')
+	// 		break;
+	// 	if ((teste[i] >= '0') && (teste[i] <= '9'))
+	// 	{
+	// 		status_str.concat(teste[i]);
+	// 	}
+	// }
+	// //Serial.print("DEBUG: ");
+	// //Serial.println(status_str);
+	// if (status_str != "")
+	// 	status = status_str.toInt();
+	// return status;
 }
 
 /*
@@ -584,7 +620,9 @@ void OperateBuzzer ()
  */
 void UnlockDoor (void)
 {
-	//	TODO
+	digitalWrite(DOOR_PIN, LOW);
+	delay(DOOR_UNLOCK_TIME);
+	digitalWrite(DOOR_PIN, HIGH);
 }
 
 /*
@@ -610,6 +648,8 @@ void setup()
 	pinMode(LED_OUT_R, OUTPUT);
 	pinMode(LED_OUT_G, OUTPUT);
 	pinMode(LED_OUT_B, OUTPUT);
+	pinMode(DOOR_PIN, OUTPUT);
+	digitalWrite(DOOR_PIN, HIGH);
 
 	Serial.println("-- Initializing RFID modules...");
 	
@@ -651,6 +691,9 @@ void setup()
 	// Initializes the buzzer
 	Serial.println("-- Setting buzzer pin as output...");
 	pinMode(PIN_BUZZER, OUTPUT);
+	WriteRGB(STANDBY_COLOR, 'i');
+	WriteRGB(STANDBY_COLOR, 'o');
+
 }
 
 /*
@@ -664,7 +707,7 @@ void loop()
 	byte status = 255;
 	String hashed = "";
 	String output = "";
-	char action = 'z';
+	char readerPosition = 'z';
 	char not_action = 'z';
 	String postData = "";
 	String employeeTag = "";
@@ -693,41 +736,31 @@ void loop()
 	// Found an UID. Turns one side to WAITING_MODE and the other to BLOCKED_MODE
 	if (entering_or_leaving == 0)
 	{
-		action = 'o';
+		readerPosition = 'o';
 		not_action = 'i';
 		Serial.println("-- User in ENTERING the room");
 	}
 	else
 	{
-		action = 'i';
+		readerPosition = 'i';
 		not_action = 'o';
 		Serial.println("-- User in LEAVING the room");
 	}
-	WriteRGB(WAITING_COLOR, action);
+	WriteRGB(WAITING_COLOR, readerPosition);
 	WriteRGB(ERROR_COLOR, not_action);
 	// Generates POST data
 	Serial.println("-- Generating POST data...");
 	postData = GenerateUnlockPostData (tag, WHO_AM_I, entering_or_leaving);
 	Serial.println(postData);
 	// Sends request to REQUEST_UNLOCK and gets response
-	output = SendPostRequest(postData, REQUEST_UNLOCK);
-	Serial.print ("-- Server response: ");
-	Serial.println(output);
-	// Parse response's status
-	status = ParseResponse(output);
+	status = SendPostRequest(postData, REQUEST_UNLOCK);
 	Serial.print("-- Status: ");
 	Serial.println(status);
 	// If already authorized, unlocks door
 	if (status == AUTHORIZED)
 	{
+		WriteRGB(OK_COLOR, readerPosition);
 		UnlockDoor();
-		WriteRGB(OK_COLOR, action);
-		//
-		//
-		//	REMOVE DELAY (or reduce it)
-		//
-		//
-		delay(5000);
 	}
 	// If needs password, blinks OK_COLOR and asks for typing
 	else if (status == PASSWORD_REQUIRED)
@@ -735,14 +768,14 @@ void loop()
 		// Copies read tag to employee tag
 		employeeTag = tag;
 		// Blinks DO_SOMETHING_COLOR
-		BlinkRGB(2, 250, BLACK, DO_SOMETHING_COLOR, action);
+		BlinkRGB(2, 250, BLACK, DO_SOMETHING_COLOR, readerPosition);
 		Serial.println("-- Waiting for password...");
 		// Gets password
 		pw = GetPassword();
 		Serial.print("-- Password: ");
 		Serial.println(pw);
 		// Blinks WAITING_COLOR once password is read
-		BlinkRGB(2, 250, BLACK, WAITING_COLOR, action);
+		BlinkRGB(2, 250, BLACK, WAITING_COLOR, readerPosition);
 		// Hashes password
 		Serial.println("-- Hashing password...");
 		hashed = HashedPassword(pw);
@@ -753,11 +786,7 @@ void loop()
 		postData = GenerateAuthenticatePostData(tag, hashed);
 		Serial.println(postData);
 		// Sends POST data to AUTHENTICATE API
-		output = SendPostRequest(postData, AUTHENTICATE);
-		Serial.print ("-- Server response: ");
-		Serial.println(output);
-		// Parse response's status
-		status = ParseResponse(output);
+		status = SendPostRequest(postData, AUTHENTICATE);
 		Serial.print("-- Status: ");
 		Serial.println(status);
 		// If authorized
@@ -767,7 +796,7 @@ void loop()
 			if (tagsArray[0] == "")
 			{
 				UnlockDoor();
-				WriteRGB(OK_COLOR, action);
+				WriteRGB(OK_COLOR, readerPosition);
 				//
 				//
 				//	REMOVE DELAY (or reduce it)
@@ -783,11 +812,7 @@ void loop()
 				postData = GenerateVisitorPostData (employeeTag, tagsArray, WHO_AM_I);
 				Serial.println(postData);
 				//	Sending POST to visitors API
-				output = SendPostRequest(postData, AUTHORIZE_VISITOR);
-				Serial.print ("-- Server response: ");
-				Serial.println(output);
-				//	Parse response's status
-				status = ParseResponse(output);
+				status = SendPostRequest(postData, AUTHORIZE_VISITOR);
 				Serial.print("-- Status: ");
 				Serial.println(status);
 				//	Unlocks door
@@ -796,7 +821,7 @@ void loop()
 		}
 		else
 		{
-			WriteRGB(ERROR_COLOR, action);
+			WriteRGB(ERROR_COLOR, readerPosition);
 			delay (5000);
 		}
 	}
@@ -810,7 +835,7 @@ void loop()
 	}
 	else
 	{
-		WriteRGB(ERROR_COLOR, action);
+		WriteRGB(ERROR_COLOR, readerPosition);
 		delay (5000);
 	}
 }
