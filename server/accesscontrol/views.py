@@ -179,19 +179,18 @@ def authorize_visitor(request):
 			user = get_current_tag_owner(request_uid)
 		except User.DoesNotExist:
 			log.event_type = UNREGISTERED_UID
-
 			response['status'] =  UNREGISTERED_UID
 			return JsonResponse(response)
 		except:
 			log.event_type = ROOM_NOT_FOUND
 			response['status'] =  ROOM_NOT_FOUND
-	
-			return JsonResponse(response)
+				return JsonResponse(response)
 		finally:
 			log.save()
 		
 		log.user = user
 		log.room = room
+		log.save()
 		
 		if (user.access_level == 0): 
 			response['status'] = INSUFFICIENT_PRIVILEGES
@@ -204,12 +203,11 @@ def authorize_visitor(request):
 				visitor_list.append(get_current_tag_owner(visitor_uid))
 			except:
 				log.event_type = UNREGISTERED_VISITOR_UID
-				log.save()
-
 				response['status'] = UNREGISTERED_VISITOR_UID
 				return JsonResponse(response)
+			finally
+				log.save()
 
-		log.save()
 		log.event_type = VISITOR_AUTHORIZED
 		log.visitors.add(*visitor_list)
 		log.save()
