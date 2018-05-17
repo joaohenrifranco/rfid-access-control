@@ -1,0 +1,217 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-05-17 16:59-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: accesscontrol/admin.py:15 accesscontrol/admin.py:40
+msgid "Password"
+msgstr "Senha"
+
+#: accesscontrol/admin.py:16 accesscontrol/admin.py:45
+msgid "Password confirmation"
+msgstr "Confirmação de senha"
+
+#: accesscontrol/admin.py:27 accesscontrol/admin.py:59
+msgid "Passwords don't match"
+msgstr "Senhas não conferem"
+
+#: accesscontrol/admin.py:43 accesscontrol/admin.py:48
+msgid "Leave blank to keep same password"
+msgstr "Deixe em branco para manter a mesma senha"
+
+#: accesscontrol/hashers.py:50
+msgid "algorithm"
+msgstr "algoritimo"
+
+#: accesscontrol/hashers.py:51
+msgid "salt"
+msgstr "salt"
+
+#: accesscontrol/hashers.py:52
+msgid "hash"
+msgstr "hash"
+
+#: accesscontrol/models.py:9
+msgid "visitor"
+msgstr "Visitante"
+
+#: accesscontrol/models.py:10
+msgid "level 1"
+msgstr "Nível 1"
+
+#: accesscontrol/models.py:11
+msgid "Level 2"
+msgstr "Nível 2"
+
+#: accesscontrol/models.py:12
+msgid "Level 3"
+msgstr "Nível 3"
+
+#: accesscontrol/models.py:13
+msgid "Level 4"
+msgstr "Nível 4"
+
+#: accesscontrol/models.py:14
+msgid "Level 5"
+msgstr "Nível 5"
+
+#: accesscontrol/models.py:18 accesscontrol/models.py:40
+#: accesscontrol/models.py:115
+msgid "RFID Tag UID"
+msgstr "UID da Tag RFID"
+
+#: accesscontrol/models.py:19 accesscontrol/models.py:41
+#: accesscontrol/models.py:60
+msgid "Created"
+msgstr "Data de criação"
+
+#: accesscontrol/models.py:21 accesscontrol/models.py:58
+msgid "RFID Tag"
+msgstr "Tag RFID"
+
+#: accesscontrol/models.py:35
+msgid "Email"
+msgstr "Email"
+
+#: accesscontrol/models.py:36
+msgid "First name"
+msgstr "Nome"
+
+#: accesscontrol/models.py:37
+msgid "Last name"
+msgstr "Sobrenome"
+
+#: accesscontrol/models.py:38
+msgid "CPF"
+msgstr "CPF"
+
+#: accesscontrol/models.py:39 accesscontrol/models.py:76
+msgid "Access level"
+msgstr "Nível de Acesso"
+
+#: accesscontrol/models.py:42 accesscontrol/models.py:116
+msgid "SIP"
+msgstr "SIP"
+
+#: accesscontrol/models.py:59 accesscontrol/models.py:110
+msgid "User"
+msgstr "Usuário"
+
+#: accesscontrol/models.py:61
+msgid "Expire date"
+msgstr "Data de expiração"
+
+#: accesscontrol/models.py:74
+msgid "Room ID"
+msgstr "ID da Sala"
+
+#: accesscontrol/models.py:75
+msgid "Description"
+msgstr "Descrição"
+
+#: accesscontrol/models.py:79 accesscontrol/models.py:117
+msgid "Room"
+msgstr "Sala"
+
+#: accesscontrol/models.py:86
+msgid "Authorized"
+msgstr "Autorizado"
+
+#: accesscontrol/models.py:87
+msgid "Unregistered Tag"
+msgstr "Tag não registrada"
+
+#: accesscontrol/models.py:88
+msgid "Insufficient Privileges"
+msgstr "Privilégios insuficientes"
+
+#: accesscontrol/models.py:89
+msgid "Wrong Password"
+msgstr "Senha incorreta"
+
+#: accesscontrol/models.py:90
+msgid "Password Required"
+msgstr "Senha solicitada"
+
+#: accesscontrol/models.py:91
+msgid "Visitor Tag Indentified"
+msgstr "Tag de visitante identificada"
+
+#: accesscontrol/models.py:92
+msgid "Visitor Authorized"
+msgstr "Visitantes autorizados"
+
+#: accesscontrol/models.py:93
+msgid "Unregistered Visitor Tag"
+msgstr "Tag de visitante não registrada"
+
+#: accesscontrol/models.py:94
+msgid "Open Door Timeout"
+msgstr "Tempo limite de porta aberta atingido"
+
+#: accesscontrol/models.py:95
+msgid "Unexpected Error"
+msgstr "Erro inesperado"
+
+#: accesscontrol/models.py:96
+msgid "Room Not Found"
+msgstr "Sala não encontrada"
+
+#: accesscontrol/models.py:97
+msgid "Front Door Opened"
+msgstr "Porta principal aberta"
+
+#: accesscontrol/models.py:98
+msgid "Unregistered SIP"
+msgstr "SIP não registrado"
+
+#: accesscontrol/models.py:101
+msgid "Outside"
+msgstr "Fora"
+
+#: accesscontrol/models.py:101
+msgid "Inside"
+msgstr "Dentro"
+
+#: accesscontrol/models.py:112
+msgid "Event type"
+msgstr "Tipo de evento"
+
+#: accesscontrol/models.py:113
+msgid "Reader position"
+msgstr "Posição do leitor"
+
+#: accesscontrol/models.py:114
+msgid "Api Module"
+msgstr "Módulo da API"
+
+#: accesscontrol/models.py:118
+msgid "Date ocurred"
+msgstr "Data do ocorrido"
+
+#: accesscontrol/models.py:119
+msgid "Visitors"
+msgstr "Visitantes"
+
+#: accesscontrol/models.py:124
+msgid "Event"
+msgstr "Evento"
+
+#~ msgid "English"
+#~ msgstr "Inglês"
+
+#~ msgid "Brazilian Portuguese"
+#~ msgstr "Português Brasileiro"

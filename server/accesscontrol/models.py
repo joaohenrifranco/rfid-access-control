@@ -6,8 +6,8 @@ from django.utils.translation import ugettext_lazy as _
 from .services import *
 
 ACCESS_LEVEL_CHOICES = (
-  (0, _('Visitor')),
-  (1, _('Level 1')),
+  (0, _('visitor')),
+  (1, _('level 1')),
   (2, _('Level 2')),
   (3, _('Level 3')),
   (4, _('Level 4')),
@@ -17,6 +17,8 @@ ACCESS_LEVEL_CHOICES = (
 class RfidTag(models.Model):
   uid = models.CharField(verbose_name=_("RFID Tag UID"), max_length=8, default=None, unique=True)
   created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
+  class Meta:
+    verbose_name_plural = _("RFID Tag")
   def __str__(self):
     return self.uid
 
@@ -51,6 +53,9 @@ class User(AbstractBaseUser):
 
   def __str__(self):
     return "%s %s" % (self.first_name, self.last_name)
+  
+  class Meta:
+    verbose_name_plural = _("User")
 
 class RfidTagUserLink(models.Model):
   rfid_tag = models.ForeignKey(RfidTag, on_delete=models.PROTECT, default=None, verbose_name=_("RFID Tag"))
@@ -73,7 +78,9 @@ class Room(models.Model):
   description = models.TextField(null=True, blank=True, verbose_name=_("Description"))
   access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='5', verbose_name=_("Access level"))
   
-  # Necessary to show name correctly at DjangoAdmin
+  class Meta:
+    verbose_name_plural = _("Room")  
+
   def __str__(self):
     return self.name.title()
   
@@ -116,3 +123,5 @@ class Event(models.Model):
 
   def __str__(self):
     return (self.get_event_type_display() + " - " + self.date.strftime("%Y-%m-%d %H:%M:%S"))
+  class Meta:
+    verbose_name_plural = _("Event")

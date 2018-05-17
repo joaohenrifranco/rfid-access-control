@@ -184,7 +184,7 @@ def authorize_visitor(request):
 		except:
 			log.event_type = ROOM_NOT_FOUND
 			response['status'] =  ROOM_NOT_FOUND
-				return JsonResponse(response)
+			return JsonResponse(response)
 		finally:
 			log.save()
 		
@@ -205,7 +205,7 @@ def authorize_visitor(request):
 				log.event_type = UNREGISTERED_VISITOR_UID
 				response['status'] = UNREGISTERED_VISITOR_UID
 				return JsonResponse(response)
-			finally
+			finally:
 				log.save()
 
 		log.event_type = VISITOR_AUTHORIZED

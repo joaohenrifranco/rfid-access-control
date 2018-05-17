@@ -100,16 +100,15 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'pt-BR'
 
-LANGUAGES = (
-    ('en', _('English')),
-    ('pt-BR', _('Brazilian Portuguese')),
-)
-
-LOCALE_PATHS = (os.path.join(BASE_DIR, 'locale/'),'../locale/')
-
-TIME_ZONE = 'UTC'
-
 USE_I18N = True
+LANGUAGES = (
+    ('en', u'English'),
+    ('pt-br', u'Português'),
+)
+LOCALE_PATHS = (os.path.join(BASE_DIR, 'locale/'),)
+
+TIME_ZONE = 'America/Sao_Paulo'
+
 USE_L10N = True
 USE_TZ = True
 
