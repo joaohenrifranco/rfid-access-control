@@ -12,8 +12,16 @@ admin.site.site_title = 'Controle de Acesso LASPI'
 admin.site.site_header = 'Controle de Acesso LASPI'
 
 class UserCreationForm(forms.ModelForm):
-	password_input = forms.CharField(label=_('Password'), widget=forms.PasswordInput)
-	password_conf_input = forms.CharField(label=_('Password confirmation'), widget=forms.PasswordInput)
+	password_input = forms.CharField(
+		label=_('Password'), 
+		widget=forms.PasswordInput,
+		required = False
+		)
+	password_conf_input = forms.CharField(
+		label=_('Password confirmation'), 
+		widget=forms.PasswordInput,
+		required = False
+		)
 
 	class Meta:
 		model = User
