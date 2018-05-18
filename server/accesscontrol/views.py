@@ -66,7 +66,6 @@ def request_unlock(request):
 		if (user.access_level == 0):
 			log.event_type = VISITOR_UID_FOUND
 			log.save()
-			
 			response['status'] = VISITOR_UID_FOUND
 			return JsonResponse(response)
 
@@ -146,6 +145,8 @@ def authenticate(request):
 			return JsonResponse(response)
 
 		log.event_type = AUTHORIZED
+		log.save()
+
 		response['status'] = AUTHORIZED
 		
 		return JsonResponse(response)
