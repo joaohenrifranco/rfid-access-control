@@ -49,6 +49,7 @@ byte WHITE [] =									{HIGH, HIGH, HIGH};
 #define STANDBY_COLOR							WHITE
 #define DO_SOMETHING_COLOR						BLUE
 #define DOOR_UNLOCK_TIME						2000
+#define TIMEOUT_VISITOR							20000
 
 /*
  *	Server Error Codes
@@ -102,6 +103,8 @@ const byte SS_PIN_INSIDE	= 					24;
  */
 const byte ssPins [] = {SS_PIN_OUTSIDE, SS_PIN_INSIDE};
 MFRC522 readers [NUM_READERS];
+bool readers_locked [2] = {false, false};
+char readers_id [2] = {'o', 'i'};
 
 /*
  *  Declaring IP, MAC and the ethernet client itself
@@ -122,6 +125,13 @@ char keys[KEYPAD_LINES][KEYPAD_COLUMNS] = KEYS;
 byte keyPadLinPins[KEYPAD_LINES] = KEYPAD_LIN_PINS;
 byte keyPadColPins[KEYPAD_COLUMNS] = KEYPAD_COL_PINS;
 Keypad keyPad = Keypad(makeKeymap(keys), keyPadLinPins, keyPadColPins, KEYPAD_LINES, KEYPAD_COLUMNS);
+
+/*
+ *	Global vars for visitors
+ */
+byte visitor_counter = 0;
+String tagsArray [MAX_VISITOR_NUM];
+unsigned long visitorInitTime = 0;
 
 /*
  *  void WriteRGB (byte color[], char inside_outside);
@@ -152,6 +162,24 @@ void WriteRGB (byte color[], char inside_outside)
 }
 
 /*
+ *	Write function header
+ */
+void WriteReaderLED (byte color[])
+{
+	for (byte i = 0; i < 2; i++)
+	{
+		if (readers_locked[i] == true)
+		{
+			WriteRGB(ERROR_COLOR, readers_id[i]);
+		}
+		else
+		{
+			WriteRGB(color, readers_id[i]);
+		}
+	}
+}
+
+/*
  *	void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char readerPosition);
  *
  *  Description:
@@ -171,9 +199,9 @@ void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_colo
 {
 	for (byte i = 0; i < n_times; i ++)
 	{
-		WriteRGB(blink_color, readerPosition);
+		WriteReaderLED(blink_color);
 		delay(delay_time);
-		WriteRGB(end_color, readerPosition);
+		WriteReaderLED(end_color);
 		delay(delay_time);
 	}
 }
@@ -198,40 +226,6 @@ String UID_toStr (byte *buffer, byte bufferSize)
 	{
 		aux.concat(String(buffer[i] < 0x10 ? "0" : ""));
 		aux.concat(String(buffer[i], HEX));
-  	}
-	return aux;
-}
-
-/*
- *  String ReadRFIDTags (char *entering_or_leaving);
- *
- *  Description:
- *  - Function to read UID tags from all readers
- *
- *  Inputs/Outputs:
- *  [OUTPUT] char *entering_or_leaving: indicates if the person is entering or leaving the room
- *
- *  Returns:
- *  [String] The UID tag itself in uppercase or empty string
- */
-String ReadRFIDTags (char *entering_or_leaving)
-{
-	digitalWrite(SS_PIN_ETHERNET, HIGH);
-	*entering_or_leaving = 255;
-  	String aux = "";
-  	for (byte i = 0; i < NUM_READERS; i++)
-	{
-		digitalWrite(SS_PIN_INSIDE, HIGH);
-		digitalWrite(SS_PIN_OUTSIDE, HIGH);
-		digitalWrite(ssPins[i], LOW);
-		aux = "";
-		if (readers[i].PICC_IsNewCardPresent() && readers[i].PICC_ReadCardSerial())
-		{
-			aux = UID_toStr(readers[i].uid.uidByte, readers[i].uid.size);
-			*entering_or_leaving = i;
-		}
-		if (aux != "")
-			return aux;
   	}
 	return aux;
 }
@@ -268,6 +262,44 @@ void BlinkBuzzer (byte n_times, byte delay_time)
 }
 
 /*
+ *  String ReadRFIDTags (char *entering_or_leaving);
+ *
+ *  Description:
+ *  - Function to read UID tags from all readers
+ *
+ *  Inputs/Outputs:
+ *  [OUTPUT] char *entering_or_leaving: indicates if the person is entering or leaving the room
+ *
+ *  Returns:
+ *  [String] The UID tag itself in uppercase or empty string
+ */
+String ReadRFIDTags (char *entering_or_leaving)
+{
+	digitalWrite(SS_PIN_ETHERNET, HIGH);
+	*entering_or_leaving = 255;
+  	String aux = "";
+  	for (byte i = 0; i < NUM_READERS; i++)
+	{
+		if (readers_locked[i] == false)
+		{
+			digitalWrite(SS_PIN_INSIDE, HIGH);
+			digitalWrite(SS_PIN_OUTSIDE, HIGH);
+			digitalWrite(ssPins[i], LOW);
+			aux = "";
+			if (readers[i].PICC_IsNewCardPresent() && readers[i].PICC_ReadCardSerial())
+			{
+				aux = UID_toStr(readers[i].uid.uidByte, readers[i].uid.size);
+				BlinkBuzzer(1, 10);
+				*entering_or_leaving = i;
+			}
+			if (aux != "")
+				return aux;
+		}
+  	}
+	return aux;
+}
+
+/*
  *	Build description (TODO)
  */
 void BuzzTimer (byte delayTime)
@@ -298,7 +330,6 @@ String GetPassword ()
 	{
 		if (c == QUIT_TYPING)
 		{
-			BlinkBuzzer(3, 50);
 			return "";
 		}
 		if (c)
@@ -423,23 +454,20 @@ String GenerateAuthenticatePostData (String uid, String password, String roomID)
  */
 String GenerateVisitorPostData (String uid, String visitorsUids [], String roomID)
 {
+	StaticJsonBuffer<200> jsonBuffer;
+	JsonObject& root = jsonBuffer.createObject();
+	root["uid"] = uid;
+	root["roomID"] = roomID;
 
-	String aux = "{\n\t\"uid\":\"";
-	aux.concat(uid);
-	aux.concat("\",\n\t\"visitorsUids\":[");
-	for (byte i = 0; i < ((sizeof(visitorsUids) / sizeof(visitorsUids[0])) - 1); i++)
+	JsonArray& VisUID = root.createNestedArray("visitorsUids");
+	for (byte i = 0; i < visitor_counter; i++)
 	{
-		aux.concat("\n\t\t\"");
-		aux.concat(visitorsUids[i]);
-		aux.concat("\",");
+		VisUID.add(visitorsUids[i]);
 	}
-	aux.concat("\n\t\t\"");
-	aux.concat(visitorsUids[(sizeof(visitorsUids) / sizeof(visitorsUids[0])) - 1]);
-	aux.concat("\"\n\t],");
-	aux.concat("\n\t\"roomID\":\"");
-	aux.concat(roomID);
-	aux.concat("\"\n}");
-	return aux;
+
+	String output;
+	root.printTo(output);
+	return output;
 }
 
 /*
@@ -618,6 +646,31 @@ void OperateBuzzer ()
 	}
 }
 
+ /*
+  *	Write header
+  */
+void ResetStatus (void)
+{
+	readers_locked[0] = false;
+	readers_locked[1] = false;
+	visitor_counter = 0;
+	loop();
+}
+
+/*
+ *	Write header
+ */
+void CheckVisitorTimeout (void)
+{
+	Serial.print ("Time: ");
+	Serial.println(millis() - visitorInitTime);
+	if ((millis() - visitorInitTime) >= TIMEOUT_VISITOR)
+	{
+		ResetStatus();
+		Serial.println("Checou timeout");
+	}
+}
+
 /*
  *  void UnlockDoor (void);
  *
@@ -629,6 +682,19 @@ void UnlockDoor (void)
 	digitalWrite(DOOR_PIN, LOW);
 	delay(DOOR_UNLOCK_TIME);
 	digitalWrite(DOOR_PIN, HIGH);
+	ResetStatus();
+}
+
+/*
+ *	Write header
+ */
+void ErrorExit (void)
+{
+	WriteReaderLED(ERROR_COLOR);
+	BlinkBuzzer(3, 50);
+	BuzzTimer(200);
+	ResetStatus();
+	delay(5000);
 }
 
 /*
@@ -697,9 +763,7 @@ void setup()
 	// Initializes the buzzer
 	Serial.println("-- Setting buzzer pin as output...");
 	pinMode(PIN_BUZZER, OUTPUT);
-	WriteRGB(STANDBY_COLOR, 'i');
-	WriteRGB(STANDBY_COLOR, 'o');
-
+	WriteReaderLED(STANDBY_COLOR);
 }
 
 /*
@@ -713,47 +777,36 @@ void loop()
 	byte status = 255;
 	String hashed = "";
 	String output = "";
-	char readerPosition = 'z';
-	char not_action = 'z';
+	byte readerPosition = 255;
 	String postData = "";
 	String employeeTag = "";
-	byte visitor_counter = 0;
-	String tagsArray [MAX_VISITOR_NUM];
 	char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
 
-	// Resets the tagsArray
-	for (byte i = 0; i < MAX_VISITOR_NUM; i++)
-		tagsArray[i] = "";
-
 	// Standby mode
-	WriteRGB(STANDBY_COLOR, 'i');
-	WriteRGB(STANDBY_COLOR, 'o');
+	if (visitor_counter == 0)
+		WriteReaderLED(STANDBY_COLOR);
+	else
+	{
+		WriteReaderLED(DO_SOMETHING_COLOR);
+	}
+
 	// Starts to read
 	Serial.println("=== Starting to read...");
 	tag = ReadRFIDTags(&entering_or_leaving);
 	while (tag == "")
 	{
 		Serial.println("-- Reading...");
+		if (visitor_counter > 0)
+			CheckVisitorTimeout();
 		delay (50);
 		tag = ReadRFIDTags(&entering_or_leaving);
 	}
 	Serial.print("UID Tag: ");
 	Serial.println(tag);
 	// Found an UID. Turns one side to WAITING_MODE and the other to BLOCKED_MODE
-	if (entering_or_leaving == 0)
-	{
-		readerPosition = 'o';
-		not_action = 'i';
-		Serial.println("-- User in ENTERING the room");
-	}
-	else
-	{
-		readerPosition = 'i';
-		not_action = 'o';
-		Serial.println("-- User in LEAVING the room");
-	}
-	WriteRGB(WAITING_COLOR, readerPosition);
-	WriteRGB(ERROR_COLOR, not_action);
+	if (entering_or_leaving == 0) readers_locked[1] = true;
+	else readers_locked[0] = true;
+	WriteReaderLED(WAITING_COLOR);
 	// Generates POST data
 	Serial.println("-- Generating POST data...");
 	postData = GenerateUnlockPostData (tag, WHO_AM_I, entering_or_leaving);
@@ -765,7 +818,7 @@ void loop()
 	// If already authorized, unlocks door
 	if (status == AUTHORIZED)
 	{
-		WriteRGB(OK_COLOR, readerPosition);
+		WriteReaderLED(OK_COLOR);
 		UnlockDoor();
 	}
 	// If needs password, blinks OK_COLOR and asks for typing
@@ -782,9 +835,7 @@ void loop()
 		Serial.println(pw);
 		if (pw == "")
 		{
-			WriteRGB(ERROR_COLOR, readerPosition);
-			BuzzTimer(200);
-			delay(5000);
+			ErrorExit();
 			return;
 		}
 		// Blinks WAITING_COLOR once password is read
@@ -805,44 +856,56 @@ void loop()
 		// If authorized
 		if (status == AUTHORIZED)
 		{
-			// Checks if there's any visitor on tagsArray
-			if (tagsArray[0] == "")
+			Serial.print("Numero do contador: ");
+			Serial.println(visitor_counter);
+			Serial.print("Array: ");
+			for (byte j = 0; j < visitor_counter; j++)
 			{
-				WriteRGB(OK_COLOR, readerPosition);
+				Serial.println(j);
+				Serial.println(tagsArray[j]);
+			}
+			// Checks if there's any visitor on tagsArray
+			if (visitor_counter == 0)
+			{
+				WriteReaderLED(OK_COLOR);
 				UnlockDoor();
 			}
 			// If there are visitor tags
 			else
 			{
 				//	Generating POST data for visitors
-				Serial.println("-- Generating POST data...");
+				Serial.println("-- Generating Visitor POST data...");
 				postData = GenerateVisitorPostData (employeeTag, tagsArray, WHO_AM_I);
 				Serial.println(postData);
 				//	Sending POST to visitors API
 				status = SendPostRequest(postData, AUTHORIZE_VISITOR);
 				Serial.print("-- Status: ");
 				Serial.println(status);
-				//	Unlocks door
-				UnlockDoor();
+				if (status == VISITOR_AUTHORIZED)
+				{
+					WriteReaderLED(OK_COLOR);
+					UnlockDoor();
+				}
 			}
 		}
 		else
 		{
-			WriteRGB(ERROR_COLOR, readerPosition);
-			delay (5000);
+			ErrorExit();
 		}
 	}
 	else if (status == VISITOR_RFID_FOUND)
 	{
 		if (visitor_counter < MAX_VISITOR_NUM)
 		{
+			visitorInitTime = millis();
+			Serial.println("Registrando visitante...");
 			tagsArray[visitor_counter] = tag;
+			Serial.println(tagsArray[visitor_counter]);
 			visitor_counter++;
 		}
 	}
 	else
 	{
-		WriteRGB(ERROR_COLOR, readerPosition);
-		delay (5000);
+		ErrorExit();
 	}
 }
