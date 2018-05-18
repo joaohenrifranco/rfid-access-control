@@ -20,7 +20,6 @@
  */
 #define WHO_AM_I              					"corredor"
 #define MEASURE_NUMBERS       					10
-#define DOOR_TIMEOUT          					15000
 #define MAX_VISITOR_NUM       					20
 #define SERIAL_SPEED          					9600
 #define MAC_ADDRESS       						{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
@@ -50,6 +49,8 @@ byte WHITE [] =									{HIGH, HIGH, HIGH};
 #define DO_SOMETHING_COLOR						BLUE
 #define DOOR_UNLOCK_TIME						2000
 #define TIMEOUT_VISITOR							20000
+#define TIMEOUT_DOOR							60000
+#define TIMEOUT_PASSWORD						15000
 
 /*
  *	Server Error Codes
@@ -326,8 +327,13 @@ String GetPassword ()
 {
 	String aux = "";
 	char c = keyPad.getKey();
+	unsigned long initial_timer = millis();
 	while (c != END_OF_PASSWORD)
 	{
+		if (millis() >= initial_timer + TIMEOUT_PASSWORD)
+		{
+			return "";
+		}
 		if (c == QUIT_TYPING)
 		{
 			return "";
@@ -606,46 +612,6 @@ bool DoorOpened ()
 	return BooleanMode(measures);
 }
 
-/*
- *	void OperateBuzzer ();
- *
- *  Description:
- *  - Operates buzzer according to the door state
- *
- *  Inputs/Outputs:
- *  -
- *
- *  Returns:
- *  -
- */
-void OperateBuzzer ()
-{
-	bool opened = DoorOpened();
-	if (opened == false)
-	{
-		Buzz(false);
-		WriteRGB(DO_SOMETHING_COLOR, 'i');
-	}
-	else
-	{
-		unsigned long initial_timer = millis();
-		while (opened == true)
-		{
-			if (millis() >= initial_timer + DOOR_TIMEOUT)
-			{
-				Buzz(true);
-				WriteRGB(RED, 'i');
-			}
-			else
-			{
-				Buzz(false);
-				WriteRGB(YELLOW, 'i');
-			}
-			opened = DoorOpened();
-		}
-	}
-}
-
  /*
   *	Write header
   */
@@ -669,6 +635,34 @@ void CheckVisitorTimeout (void)
 		ResetStatus();
 		Serial.println("Checou timeout");
 	}
+}
+
+/*
+ *	Write header
+ */
+void CheckDoorTimeout (void)
+{
+	bool opened = DoorOpened();
+	unsigned long timer = millis();
+	bool previous_lock [2] = {readers_locked[0], readers_locked[1]};
+	while (opened)
+	{
+		Serial.println ("=== PORTA ABERTA! ===");
+		readers_locked[0] = true;
+		readers_locked[1] = true;
+		WriteReaderLED(ERROR_COLOR);
+		if (millis() >= timer + TIMEOUT_DOOR)
+		{
+			Buzz(true);
+		}
+		opened = DoorOpened();
+	}
+	digitalWrite(DOOR_PIN, HIGH);
+	WriteReaderLED(STANDBY_COLOR);
+	Serial.println("- Porta fechada...");
+	Buzz(false);
+	readers_locked [0] = previous_lock [0];
+	readers_locked [1] = previous_lock [1];
 }
 
 /*
@@ -781,6 +775,8 @@ void loop()
 	String postData = "";
 	String employeeTag = "";
 	char entering_or_leaving = 255; //0 (ZERO) indicates entering and 1 (ONE) indicates leaving
+
+	CheckDoorTimeout();
 
 	// Standby mode
 	if (visitor_counter == 0)
