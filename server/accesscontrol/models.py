@@ -3,7 +3,6 @@ from .consts import *
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 #from django.db.models.signals import pre_save
-from .services import *
 
 ACCESS_LEVEL_CHOICES = (
   (0, _('visitor')),
@@ -65,6 +64,8 @@ class RfidTagUserLink(models.Model):
   
   def __str__(self):
     return (self.rfid_tag.uid + " - " + self.user.get_full_name())
+  
+  
 
   # def rfid_tag_user_link_pre_save(sender, instance, *args, **kwargs):
   #   # TODO: DEACTIVATE OTHER ENTRIS WITH SAME RFID TAG LINK

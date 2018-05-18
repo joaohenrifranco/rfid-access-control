@@ -1,17 +1,15 @@
 import datetime
 from django.db.models import Q
 from django.http import HttpResponse
-
-from .models import *
-from .consts import *
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from accesscontrol.models import *
+from accesscontrol.consts import *
 
 def get_current_tag_owner(uid):
-    from accesscontrol.models import User
     not_expired_users = User.objects.filter(rfidtaguserlink__expire_date__gte=datetime.date.today())
     never_expire_users = User.objects.filter(rfidtaguserlink__expire_date__isnull=True)
     all_valid_users = not_expired_users | never_expire_users
-
-    print(all_valid_users)
     return all_valid_users.get(rfid_tag__uid=uid.lower())
 
 def check_password(user, password):
@@ -19,14 +17,13 @@ def check_password(user, password):
         return True
     return False
 
-def correct_double_association(uid):
-    try:
-        user = get_current_tag_owner(uid)
-    except:
-        return
-    
-    user.rfid_tag.expire_date = datetime.datetime.now()
-
-
 def malformed_post():
     return HttpResponse("Malformed POST request. Please check documentation.")
+
+@receiver(pre_save, sender=RfidTagUserLink)
+def correct_double_association(sender, instance, **kwargs):
+    print(instance.rfid_tag.uid)
+    user = get_current_tag_owner(instance.rfid_tag.uid)
+    if user != instance:
+        #TODO: set expire date to now
+        return
