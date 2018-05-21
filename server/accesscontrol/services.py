@@ -19,11 +19,3 @@ def check_password(user, password):
 
 def malformed_post():
     return HttpResponse("Malformed POST request. Please check documentation.")
-
-@receiver(pre_save, sender=RfidTagUserLink)
-def correct_double_association(sender, instance, **kwargs):
-    print(instance.rfid_tag.uid)
-    user = get_current_tag_owner(instance.rfid_tag.uid)
-    if user != instance:
-        #TODO: set expire date to now
-        return

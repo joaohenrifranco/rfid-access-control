@@ -1,8 +1,9 @@
+import datetime
 from django.db import models
-from .consts import *
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
-#from django.db.models.signals import pre_save
+from django.core.exceptions import ValidationError
+from accesscontrol.consts import *
 
 ACCESS_LEVEL_CHOICES = (
   (0, _('visitor')),
@@ -17,7 +18,7 @@ class RfidTag(models.Model):
   uid = models.CharField(verbose_name=_("RFID Tag UID"), max_length=8, default=None, unique=True)
   created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
   class Meta:
-    verbose_name_plural = _("RFID Tag")
+    verbose_name = _("RFID Tag")
   def __str__(self):
     return self.uid
 
@@ -54,7 +55,7 @@ class User(AbstractBaseUser):
     return "%s %s" % (self.first_name, self.last_name)
   
   class Meta:
-    verbose_name_plural = _("User")
+    verbose_name = _("User")
 
 class RfidTagUserLink(models.Model):
   rfid_tag = models.ForeignKey(RfidTag, on_delete=models.PROTECT, default=None, verbose_name=_("RFID Tag"))
@@ -65,14 +66,12 @@ class RfidTagUserLink(models.Model):
   def __str__(self):
     return (self.rfid_tag.uid + " - " + self.user.get_full_name())
   
-  
-
-  # def rfid_tag_user_link_pre_save(sender, instance, *args, **kwargs):
-  #   # TODO: DEACTIVATE OTHER ENTRIS WITH SAME RFID TAG LINK
-  #   # if created:
-  #   #   print("Created")
-
-#pre_save.connect(RfidTagUserLink.rfid_tag_user_link_pre_save, RfidTagUserLink, dispatch_uid=".models.RfidTagUserLink")
+  def clean(self):
+    users_with_same_tag = User.objects.filter(rfid_tag=self.rfid_tag)
+    users_with_same_tag.exclude(rfidtaguserlink__expire_date__lte=datetime.date.today())
+    users_with_same_tag.exclude(rfidtaguserlink__expire_date__isnull=True)
+    if (users_with_same_tag.count != 1):
+      raise ValidationError("Essa tag já está ativa em outro usuário")
 
 class Room(models.Model):
   name = models.CharField(max_length=15, verbose_name=_("Room ID"))
@@ -80,7 +79,7 @@ class Room(models.Model):
   access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='5', verbose_name=_("Access level"))
   
   class Meta:
-    verbose_name_plural = _("Room")  
+    verbose_name = _("Room")  
 
   def __str__(self):
     return self.name.title()
@@ -125,4 +124,4 @@ class Event(models.Model):
   def __str__(self):
     return (self.get_event_type_display() + " - " + self.date.strftime("%Y-%m-%d %H:%M:%S"))
   class Meta:
-    verbose_name_plural = _("Event")
+    verbose_name = _("Event")
