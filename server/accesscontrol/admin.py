@@ -1,15 +1,13 @@
-from django.contrib import admin
 from django import forms
-from django.forms import PasswordInput
+from django.contrib import admin
 from django.contrib.auth.models import User as DjangoAdminUser, Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+from accesscontrol.models import *
 
-from .models import *
-
-admin.site.site_title = 'Controle de Acesso LASPI'
-admin.site.site_header = 'Controle de Acesso LASPI'
+admin.site.site_title = _('Controle de Acesso LASPI')
+admin.site.site_header = _('Controle de Acesso LASPI')
 
 class UserCreationForm(forms.ModelForm):
 	password_input = forms.CharField(
