@@ -11,12 +11,12 @@ admin.site.site_header = _('Controle de Acesso LASPI')
 
 class UserCreationForm(forms.ModelForm):
 	password_input = forms.CharField(
-		label=_('Password'), 
+		label=_('password').title(), 
 		widget=forms.PasswordInput,
 		required = False
 		)
 	password_conf_input = forms.CharField(
-		label=_('Password confirmation'), 
+		label=_('password confirmation').title(), 
 		widget=forms.PasswordInput,
 		required = False
 		)
@@ -27,8 +27,8 @@ class UserCreationForm(forms.ModelForm):
 
 	def clean_password_conf_input(self):
 		# Check that the two password entries match
-		password_input = self.cleaned_data.get("password_input")
-		password_conf_input = self.cleaned_data.get("password_conf_input")
+		password_input = self.cleaned_data.get('password_input')
+		password_conf_input = self.cleaned_data.get('password_conf_input')
 		if password_input and password_conf_input and password_input != password_conf_input:
 			raise forms.ValidationError(_("Passwords don't match"))
 		return password_conf_input
@@ -36,22 +36,24 @@ class UserCreationForm(forms.ModelForm):
 	def save(self, commit=True):
 		# Save the provided password in hashed format
 		user = super(UserCreationForm, self).save(commit=False)
-		user.set_password(self.cleaned_data["password_input"])
+		user.set_password(self.cleaned_data['password_input'])
 		if commit:
 			user.save()
 		return user
 
 class UserChangeForm(forms.ModelForm):
 	password_input = forms.CharField(
-		label=_('Password'), 
+		label=_('password').title(), 
 		widget=forms.PasswordInput, 
 		required = False, 
-		help_text=_("Leave blank to keep same password"))
+		help_text=_('Leave blank to keep same password')
+	)
 	password_conf_input = forms.CharField(
-		label=_('Password confirmation'), 
+		label=_('password confirmation').title(), 
 		widget=forms.PasswordInput, 
 		required = False,
-		help_text=_("Leave blank to keep same password"))
+		help_text=_('Leave blank to keep same password')
+		)
 
 	class Meta:
 		model = User
@@ -59,27 +61,30 @@ class UserChangeForm(forms.ModelForm):
 
 	def clean_password_conf_input(self):
 		# Check that the two password entries match
-		password_input = self.cleaned_data.get("password_input")
-		password_conf_input = self.cleaned_data.get("password_conf_input")
+		password_input = self.cleaned_data.get('password_input')
+		password_conf_input = self.cleaned_data.get('password_conf_input')
 		if password_input != password_conf_input:
-			raise forms.ValidationError(_("Passwords don't match"))
+			raise forms.ValidationError_("Passwords don't match")
 		return password_conf_input
 
 	def save(self, commit=True):
 		# Save the provided password in hashed format
 		user = super(UserChangeForm, self).save(commit=False)
-		if (self.cleaned_data["password_input"] != ""):
-			user.set_password(self.cleaned_data["password_input"])
+		if (self.cleaned_data['password_input'] != ''):
+			user.set_password(self.cleaned_data['password_input'])
 		if commit:
 			user.save()
 		return user
 	
 	def clean_date_added(self):
-		return self.initial["date_added"]
+		return self.initial['date_added']
 
 class RfidTagUserLinkInline(admin.TabularInline):
 	model = RfidTagUserLink
 	extra = 0
+	# Nobody can delete
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 class UserAdmin(BaseUserAdmin):
 	# The forms to add and change user instances

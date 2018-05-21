@@ -8,7 +8,7 @@ from accesscontrol.models import *
 from accesscontrol.consts import *
 
 def index(request):
-	return HttpResponse("Access control api is online! It is accessible through POST requests.")
+	return HttpResponse_('Access control api is online! It is accessible through POST requests.')
 
 @csrf_exempt # Disables CSRF verification for this method
 def request_unlock(request):

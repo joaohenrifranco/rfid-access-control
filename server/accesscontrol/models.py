@@ -6,102 +6,167 @@ from django.core.exceptions import ValidationError
 from accesscontrol.consts import *
 
 ACCESS_LEVEL_CHOICES = (
-  (0, _('visitor')),
-  (1, _('level 1')),
-  (2, _('Level 2')),
-  (3, _('Level 3')),
-  (4, _('Level 4')),
-  (5, _('Level 5')),
+  (0, _('visitor').title()),
+  (1, _('level 1').title()),
+  (2, _('level 2').title()),
+  (3, _('level 3').title()),
+  (4, _('level 4').title()),
+  (5, _('level 5').title()),
 )
 
 class RfidTag(models.Model):
-  uid = models.CharField(verbose_name=_("RFID Tag UID"), max_length=8, default=None, unique=True)
-  created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
+  uid = models.CharField(
+    verbose_name=_('RFID tag UID'), 
+    max_length=8, 
+    default=None, 
+    unique=True
+    )
+  created = models.DateTimeField(
+    verbose_name=_('created'), 
+    auto_now_add=True
+    )
   class Meta:
-    verbose_name = _("RFID Tag")
+    verbose_name = _('RFID tag')
   def __str__(self):
     return self.uid
 
 class UserManager(BaseUserManager):
   def create_user(self, email, date_added=None, password=None):
     if not email:
-      raise ValueError('Users must have an email address')
+      raise ValueError_('Users must have an email address')
     user = self.model(email=self.normalize_email(email),)
     user.set_password(password)
     user.save(using=self._db)
     return user
 
 class User(AbstractBaseUser):
-  email = models.EmailField(verbose_name=_("Email"), max_length=255, unique=True)
-  first_name = models.CharField(verbose_name=_("First name"), max_length=200)
-  last_name = models.CharField(verbose_name=_("Last name"), max_length=200)
-  cpf = models.CharField(verbose_name=_("CPF"), max_length=11, unique=True)
-  access_level = models.IntegerField(verbose_name=_("Access level"), choices=ACCESS_LEVEL_CHOICES, default='0')
-  rfid_tag = models.ManyToManyField(RfidTag, through='RfidTagUserLink', blank=True, verbose_name=_("RFID Tag UID"))
-  created = models.DateTimeField(verbose_name=_("Created"), auto_now_add=True)
-  sip = models.CharField(verbose_name=_("SIP"), max_length=3, unique=True, blank=True, null=True)
-  
   objects = UserManager()
-
   USERNAME_FIELD = 'email'
-
+  
+  email = models.EmailField(
+    verbose_name=_('email'),
+    max_length=255, 
+    unique=True
+    )
+  first_name = models.CharField(
+    verbose_name=_('first name'),
+    max_length=200
+    )
+  last_name = models.CharField(
+    verbose_name=_('last name'),
+    max_length=200
+    )
+  cpf = models.CharField(
+    verbose_name=_('CPF'),
+    max_length=11, 
+    unique=True,
+    null=True,
+    blank=True
+    )
+  access_level = models.IntegerField(
+    verbose_name=_('access level'),
+    choices=ACCESS_LEVEL_CHOICES,
+    default='0'
+    )
+  rfid_tag = models.ManyToManyField(
+    RfidTag, 
+    through='RfidTagUserLink', 
+    blank=True, 
+    verbose_name=_('RFID Tag UID')
+    )
+  created = models.DateTimeField(
+    verbose_name=_('created'), 
+    auto_now_add=True
+    )
+  sip = models.CharField(
+    verbose_name=_('SIP'), 
+    max_length=3, 
+    unique=True, 
+    blank=True, 
+    null=True
+    )
+  
   def get_full_name(self):
-    return "%s %s" % (self.first_name, self.last_name)
+    return '%s %s' % (self.first_name, self.last_name)
 
   def get_short_name(self):
     return self.first_name
 
   def __str__(self):
-    return "%s %s" % (self.first_name, self.last_name)
+    return '%s %s' % (self.first_name, self.last_name)
   
   class Meta:
-    verbose_name = _("User")
+    verbose_name = _('user')
 
 class RfidTagUserLink(models.Model):
-  rfid_tag = models.ForeignKey(RfidTag, on_delete=models.PROTECT, default=None, verbose_name=_("RFID Tag"))
-  user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, verbose_name=_("User"))
-  created = models.DateTimeField(auto_now_add=True, verbose_name=_("Created"))
-  expire_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Expire date"))
+  rfid_tag = models.ForeignKey(
+    RfidTag, 
+    on_delete=models.PROTECT, 
+    default=None, 
+    verbose_name=_('RFID Tag')
+    )
+  user = models.ForeignKey(
+    User, 
+    on_delete=models.PROTECT, 
+    default=None, 
+    verbose_name=_('user'))
+  created = models.DateTimeField(
+    auto_now_add=True, 
+    verbose_name=_('created'))
+  expire_date = models.DateTimeField(
+    null=True, 
+    blank=True, 
+    verbose_name=_('expire date')
+    )
   
   def __str__(self):
-    return (self.rfid_tag.uid + " - " + self.user.get_full_name())
+    return (self.rfid_tag.uid + ' - ' + self.user.get_full_name())
   
   def clean(self):
     users_with_same_tag = User.objects.filter(rfid_tag=self.rfid_tag)
     users_with_same_tag.exclude(rfidtaguserlink__expire_date__lte=datetime.date.today())
     users_with_same_tag.exclude(rfidtaguserlink__expire_date__isnull=True)
-    if (users_with_same_tag.count != 1):
-      raise ValidationError("Essa tag já está ativa em outro usuário")
+    if (users_with_same_tag.count() > 0):
+      raise ValidationError(_('This tag is already active with another user'))
 
 class Room(models.Model):
-  name = models.CharField(max_length=15, verbose_name=_("Room ID"))
-  description = models.TextField(null=True, blank=True, verbose_name=_("Description"))
-  access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default='5', verbose_name=_("Access level"))
-  
+  name = models.CharField(
+    max_length=15, 
+    verbose_name=_('room ID')
+    )
+  description = models.TextField(
+    null=True, 
+    blank=True, 
+    verbose_name=_('description')
+    )
+  access_level = models.IntegerField(
+    choices=ACCESS_LEVEL_CHOICES, 
+    default='0', 
+    verbose_name=_('access level')
+    )
   class Meta:
-    verbose_name = _("Room")  
-
+    verbose_name = _('room')  
   def __str__(self):
     return self.name.title()
   
 class Event(models.Model):
   EVENT_TYPE_CHOICES = (
-    (AUTHORIZED, _('Authorized')),
-    (UNREGISTERED_UID, _('Unregistered Tag')),
-    (INSUFFICIENT_PRIVILEGES, _('Insufficient Privileges')),
-    (WRONG_PASSWORD, _('Wrong Password')),
-    (PASSWORD_REQUIRED, _('Password Required')),
-    (VISITOR_UID_FOUND, _('Visitor Tag Indentified')),
-    (VISITOR_AUTHORIZED, _('Visitor Authorized')),
-    (UNREGISTERED_VISITOR_UID, _('Unregistered Visitor Tag')),
-    (OPEN_DOOR_TIMEOUT, _('Open Door Timeout')),
-    (UNEXPECTED_ERROR, _('Unexpected Error')),
-    (ROOM_NOT_FOUND, _('Room Not Found')),
-    (FRONT_DOOR_OPENED, _('Front Door Opened')),
-    (UNREGISTERED_SIP, _('Unregistered SIP')),
+    (AUTHORIZED, _('authorized')),
+    (UNREGISTERED_UID, _('unregistered tag')),
+    (INSUFFICIENT_PRIVILEGES, _('insufficient privileges')),
+    (WRONG_PASSWORD, _('wrong password')),
+    (PASSWORD_REQUIRED, _('password required')),
+    (VISITOR_UID_FOUND, _('visitor tag indentified')),
+    (VISITOR_AUTHORIZED, _('visitors authorized')),
+    (UNREGISTERED_VISITOR_UID, _('unregistered visitor tag')),
+    (OPEN_DOOR_TIMEOUT, _('open door timeout')),
+    (UNEXPECTED_ERROR, _('unexpected error')),
+    (ROOM_NOT_FOUND, _('room not found')),
+    (FRONT_DOOR_OPENED, _('front door opened')),
+    (UNREGISTERED_SIP, _('unregistered SIP')),
   )
 
-  READER_POSITION_CHOICES = ((0, _('Outside')),(1, _('Inside')))
+  READER_POSITION_CHOICES = ((0, _('outside')),(1, _('inside')))
 
   API_MODULE_CHOICES = (
     (AUTH_API, '/api/authenticate/'),
@@ -110,18 +175,66 @@ class Event(models.Model):
     (FRONT_DOOR_API, '/api/request-front-door-unlock'),
   )
 
-  user = models.ForeignKey(User, on_delete=models.PROTECT, default=None, blank=True, null=True, related_name='events', verbose_name=_("User"))
-  
-  event_type = models.IntegerField(choices=EVENT_TYPE_CHOICES, null=True, verbose_name=_("Event type"))
-  reader_position = models.IntegerField(choices=READER_POSITION_CHOICES, verbose_name=_("Reader position"))
-  api_module = models.IntegerField(choices=API_MODULE_CHOICES, default=None, verbose_name=_("Api Module"))
-  uid = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name=_("RFID Tag UID"))
-  sip = models.CharField(verbose_name=_("SIP"), max_length=3, unique=True, blank=True, null=True)
-  room = models.ForeignKey(Room, on_delete=models.PROTECT, default=None, blank=True, null=True, verbose_name=_("Room"))
-  date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date ocurred"))
-  visitors = models.ManyToManyField(User, related_name='visitors_authorized', default=None, blank=True, verbose_name=_("Visitors"))
+  user = models.ForeignKey(
+    User, 
+    on_delete=models.PROTECT, 
+    default=None, 
+    blank=True, 
+    null=True, 
+    related_name='events', 
+    verbose_name=_('user')
+    )  
+  event_type = models.IntegerField(
+    choices=EVENT_TYPE_CHOICES, 
+    null=True, 
+    verbose_name=_('event type')
+    )
+  reader_position = models.IntegerField(
+    choices=READER_POSITION_CHOICES, 
+    verbose_name=_('reader position')
+    )
+  api_module = models.IntegerField(
+    choices=API_MODULE_CHOICES, 
+    default=None, 
+    verbose_name=_('api Module')
+    )
+  uid = models.CharField(
+    max_length=8, 
+    default=None, 
+    blank=True, 
+    null=True,
+    verbose_name=_('RFID Tag UID')
+    )
+  sip = models.CharField(
+    verbose_name=_('SIP'), 
+    max_length=3, 
+    unique=True, 
+    blank=True, 
+    null=True
+    )
+  room = models.ForeignKey(
+    Room,
+    on_delete=models.PROTECT, 
+    default=None, 
+    blank=True, 
+    null=True, 
+    verbose_name=_('room')
+    )
+  date = models.DateTimeField(
+    auto_now_add=True,
+    verbose_name=_('date ocurred')
+    )
+  visitors = models.ManyToManyField(
+    User, 
+    related_name='visitors_authorized', 
+    default=None, 
+    blank=True, 
+    verbose_name=_('visitors')
+    )
 
   def __str__(self):
-    return (self.get_event_type_display() + " - " + self.date.strftime("%Y-%m-%d %H:%M:%S"))
+    return (
+      self.get_event_type_display() + ' - ' + self.date.strftime('%Y-%m-%d %H:%M:%S')
+    )
   class Meta:
-    verbose_name = _("Event")
+    verbose_name = _('event')
