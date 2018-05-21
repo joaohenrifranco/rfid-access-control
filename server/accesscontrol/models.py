@@ -1,4 +1,4 @@
-import datetime
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
@@ -123,11 +123,15 @@ class RfidTagUserLink(models.Model):
     return (self.rfid_tag.uid + ' - ' + self.user.get_full_name())
   
   def clean(self):
-    users_with_same_tag = User.objects.filter(rfid_tag=self.rfid_tag)
-    users_with_same_tag.exclude(rfidtaguserlink__expire_date__lte=datetime.date.today())
-    users_with_same_tag.exclude(rfidtaguserlink__expire_date__isnull=True)
-    if (users_with_same_tag.count() > 0):
-      raise ValidationError(_('This tag is already active with another user'))
+    if (self.expire_date is None or self.expire_date > timezone.now()):
+      users_with_same_tag = User.objects.filter(rfid_tag=self.rfid_tag)
+      print(users_with_same_tag)
+      users_with_same_tag = users_with_same_tag.exclude(rfidtaguserlink__expire_date__lte=timezone.now())
+      print(users_with_same_tag)
+      users_with_same_tag = users_with_same_tag.exclude(pk=self.user.pk)
+      print(users_with_same_tag)
+      if (users_with_same_tag.count() > 0):
+        raise ValidationError(_('This tag is already active with another user'))
 
 class Room(models.Model):
   name = models.CharField(
