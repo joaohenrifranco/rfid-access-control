@@ -17,6 +17,7 @@ ACCESS_LEVEL_CHOICES = (
 class RfidTag(models.Model):
   uid = models.CharField(
     verbose_name=_('RFID tag UID'), 
+    max_length=256, 
     default=None, 
     unique=True
     )
@@ -202,6 +203,7 @@ class Event(models.Model):
     verbose_name=_('api Module')
     )
   uid = models.CharField(
+    max_length=256, 
     default=None, 
     blank=True, 
     null=True,
