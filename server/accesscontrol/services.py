@@ -10,7 +10,7 @@ def get_current_tag_owner(uid):
     not_expired_users = User.objects.filter(rfidtaguserlink__expire_date__gte=datetime.date.today())
     never_expire_users = User.objects.filter(rfidtaguserlink__expire_date__isnull=True)
     all_valid_users = not_expired_users | never_expire_users
-    return all_valid_users.get(rfid_tag__uid=uid.lower())
+    return all_valid_users.get(rfid_tag__uid__iexact=uid)
 
 def check_password(user, password):
     if (user.password.lower() == ("%s%s" % ("sha256$$", password)).lower()):
