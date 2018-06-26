@@ -688,7 +688,7 @@ void ErrorExit (void)
 	BlinkBuzzer(3, 50);
 	BuzzTimer(200);
 	ResetStatus();
-	delay(5000);
+	delay(1000);
 }
 
 /*
