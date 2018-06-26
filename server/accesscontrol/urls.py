@@ -1,6 +1,6 @@
 from django.urls import path
-from . import admin
-from . import views
+from accesscontrol import admin
+from accesscontrol import views
 
 urlpatterns = [
     path('request-unlock', views.request_unlock),

@@ -1,14 +1,14 @@
+import json
+import datetime
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-import json
-import datetime
 from accesscontrol.services import *
 from accesscontrol.models import *
 from accesscontrol.consts import *
 
 def index(request):
-	return HttpResponse("Access control api is online! It is accessible through POST requests.")
+	return HttpResponse_('Access control api is online! It is accessible through POST requests.')
 
 @csrf_exempt # Disables CSRF verification for this method
 def request_unlock(request):
@@ -54,11 +54,10 @@ def request_unlock(request):
 		log.user = user
 		log.save()
 
-		# Always unlock door on exit
+		# Always authorize from inside
 		if (request_reader_position == 1):
 			log.event_type = AUTHORIZED
 			log.save()
-
 			response['status'] = AUTHORIZED
 			return JsonResponse(response)
 
@@ -73,7 +72,6 @@ def request_unlock(request):
 		if user.access_level < room.access_level:
 			log.event_type = INSUFFICIENT_PRIVILEGES
 			log.save()
-
 			response['status'] = INSUFFICIENT_PRIVILEGES
 			return JsonResponse(response)
 
@@ -81,15 +79,12 @@ def request_unlock(request):
 		if (room.access_level >= REQUIRE_PASSWORD_LEVEL_THRESHOLD):
 			log.event_type = PASSWORD_REQUIRED
 			log.save()
-
 			response['status'] = PASSWORD_REQUIRED
 			return JsonResponse(response)
 		
 		# If reaches this point, authorize unlock
-		
 		log.event_type = AUTHORIZED
 		log.save()
-
 		response['status'] = AUTHORIZED
 		return JsonResponse(response)
 
@@ -99,7 +94,6 @@ def authenticate(request):
 		return index(request)
 	
 	elif request.method == 'POST':
-
 		try:
 			data = json.loads(request.body)
 			request_password = data['password']
@@ -109,7 +103,6 @@ def authenticate(request):
 			return malformed_post()
 				
 		response = {}
-
 		log = Event()
 		log.reader_position = 0
 		log.uid = request_uid
@@ -146,9 +139,7 @@ def authenticate(request):
 
 		log.event_type = AUTHORIZED
 		log.save()
-
 		response['status'] = AUTHORIZED
-		
 		return JsonResponse(response)
 
 @csrf_exempt # Disables CSRF verification for this method
@@ -157,7 +148,6 @@ def authorize_visitor(request):
 		return index(request)
 	
 	elif request.method == 'POST':
-
 		request_visitor_array = []
 		try:
 			data = json.loads(request.body)
@@ -168,7 +158,6 @@ def authorize_visitor(request):
 			return malformed_post()
 
 		response = {}
-
 		log = Event()
 		log.uid = request_uid
 		log.date = datetime.datetime.now()
@@ -221,7 +210,6 @@ def request_front_door_unlock(request):
 		return index(request)
 	
 	elif request.method == 'POST':
-
 		try:
 			data = json.loads(request.body)
 			request_sip_id = data['sip']
@@ -229,7 +217,6 @@ def request_front_door_unlock(request):
 			return malformed_post()
 
 		response = {}
-
 		log = Event()
 		log.sip = request_sip_id
 		log.date = datetime.datetime.now()
@@ -250,13 +237,15 @@ def request_front_door_unlock(request):
 			log.save()
 		
 		log.user = user
+		log.save()
 		
 		if (user.access_level == 0): 
 			response['status'] = INSUFFICIENT_PRIVILEGES
+			log.event_type = INSUFFICIENT_PRIVILEGES
+			log.save()
 			return JsonResponse(response)
 
 		log.event_type = FRONT_DOOR_OPENED
 		log.save()
-		
 		response['status'] = FRONT_DOOR_OPENED
 		return JsonResponse(response)
