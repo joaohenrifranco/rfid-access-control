@@ -205,6 +205,7 @@ def authorize_visitor(request):
 		response['status'] = VISITOR_AUTHORIZED
 		return JsonResponse(response)
 
+@csrf_exempt
 def request_front_door_unlock(request):
 	if request.method == 'GET':
 		return index(request)
