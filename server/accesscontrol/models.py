@@ -212,7 +212,6 @@ class Event(models.Model):
   sip = models.CharField(
     verbose_name=_('SIP'), 
     max_length=3, 
-    unique=True, 
     blank=True, 
     null=True
     )
