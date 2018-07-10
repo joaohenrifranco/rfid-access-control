@@ -23,11 +23,11 @@
 #define MAX_VISITOR_NUM       					20
 #define SERIAL_SPEED          					9600
 #define MAC_ADDRESS       						{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
-#define SERVER_IP         						{192, 168, 88, 64}
+#define SERVER_IP         						{192, 168, 88, 41}
 #define REQUEST_UNLOCK    						"/api/request-unlock"
 #define AUTHENTICATE      						"/api/authenticate"
 #define AUTHORIZE_VISITOR 						"/api/authorize-visitor"
-#define REQUEST_PORT      						8000                  					//Standard HTTP port
+#define REQUEST_PORT      						80                 						//Standard HTTP port
 #define KEYPAD_LINES      						4
 #define KEYPAD_COLUMNS    						3
 #define KEYS              						{{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}, {'*', '0', '#'}}
@@ -115,9 +115,6 @@ char readers_id [2] = {'o', 'i'};
 // ;
 // #else
 byte mac[] = MAC_ADDRESS;
-EthernetClient ethClient;
-IPAddress serverIP(SERVER_IP);
-HttpClient httpClient = HttpClient(ethClient, serverIP, REQUEST_PORT);
 
 /*
  *  Declaring and initializing the keypad (4x3)
@@ -494,6 +491,11 @@ byte SendPostRequest(String postData, String requestFrom)
 	digitalWrite(SS_PIN_ETHERNET, LOW);
 	digitalWrite(SS_PIN_OUTSIDE, HIGH);
 	digitalWrite(SS_PIN_INSIDE, HIGH);
+
+	EthernetClient ethClient;
+	IPAddress serverIP(SERVER_IP);
+	HttpClient httpClient = HttpClient(ethClient, "192.168.88.41", REQUEST_PORT);
+	
 	String response = "";
 	byte output = 255;
 	IPAddress myIP(Ethernet.localIP());
@@ -512,7 +514,7 @@ byte SendPostRequest(String postData, String requestFrom)
 		return 255;
 	}
 	output = root["status"];
-	ethClient.stop();
+	httpClient.endRequest();
 	return output;
 }
 
