@@ -6,9 +6,10 @@ from django.http import JsonResponse
 from accesscontrol.services import *
 from accesscontrol.models import *
 from accesscontrol.consts import *
+from django.utils.translation import ugettext_lazy as _
 
 def index(request):
-	return HttpResponse_('Access control api is online! It is accessible through POST requests.')
+	return HttpResponse(_('Access control api is online! It is accessible through POST requests.'))
 
 @csrf_exempt # Disables CSRF verification for this method
 def request_unlock(request):
