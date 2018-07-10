@@ -155,22 +155,22 @@ class Room(models.Model):
   
 class Event(models.Model):
   EVENT_TYPE_CHOICES = (
-    (AUTHORIZED, _('authorized')),
-    (UNREGISTERED_UID, _('unregistered tag')),
-    (INSUFFICIENT_PRIVILEGES, _('insufficient privileges')),
-    (WRONG_PASSWORD, _('wrong password')),
-    (PASSWORD_REQUIRED, _('password required')),
-    (VISITOR_UID_FOUND, _('visitor tag indentified')),
-    (VISITOR_AUTHORIZED, _('visitors authorized')),
-    (UNREGISTERED_VISITOR_UID, _('unregistered visitor tag')),
-    (OPEN_DOOR_TIMEOUT, _('open door timeout')),
-    (UNEXPECTED_ERROR, _('unexpected error')),
-    (ROOM_NOT_FOUND, _('room not found')),
-    (FRONT_DOOR_OPENED, _('front door opened')),
-    (UNREGISTERED_SIP, _('unregistered SIP')),
+    (AUTHORIZED, _('authorized').capitalize()),
+    (UNREGISTERED_UID, _('unregistered tag').capitalize()),
+    (INSUFFICIENT_PRIVILEGES, _('insufficient privileges').capitalize()),
+    (WRONG_PASSWORD, _('wrong password').capitalize()),
+    (PASSWORD_REQUIRED, _('password required').capitalize()),
+    (VISITOR_UID_FOUND, _('visitor tag indentified').capitalize()),
+    (VISITOR_AUTHORIZED, _('visitors authorized').capitalize()),
+    (UNREGISTERED_VISITOR_UID, _('unregistered visitor tag').capitalize()),
+    (OPEN_DOOR_TIMEOUT, _('open door timeout').capitalize()),
+    (UNEXPECTED_ERROR, _('unexpected error').capitalize()),
+    (ROOM_NOT_FOUND, _('room not found').capitalize()),
+    (FRONT_DOOR_OPENED, _('front door opened').capitalize()),
+    (UNREGISTERED_SIP, _('unregistered SIP').capitalize()),
   )
 
-  READER_POSITION_CHOICES = ((0, _('outside')),(1, _('inside')))
+  READER_POSITION_CHOICES = ((0, _('outside').capitalize()),(1, _('inside').capitalize()))
 
   API_MODULE_CHOICES = (
     (AUTH_API, '/api/authenticate/'),
