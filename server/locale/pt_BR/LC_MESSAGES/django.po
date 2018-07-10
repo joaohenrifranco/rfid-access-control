@@ -195,7 +195,7 @@ msgstr "fora"
 
 #: accesscontrol/models.py:170
 msgid "inside"
-msgstr "Dentro"
+msgstr "dentro"
 
 #: accesscontrol/models.py:191
 msgid "event type"
