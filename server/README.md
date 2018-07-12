@@ -1,24 +1,26 @@
 # Server
-Django based server that provides a RESTful API for authentication and logging. Also provides a control panel made with Django Admin.
+Django based server that provides a RESTful API for authentication and logging.
+
+Also provides a control panel made with Django Admin.
 
 Works with [Django 2.0+](https://docs.djangoproject.com/en/2.0/).
 
 ## Running
 
- - Firstly get Django through pip
+ - Get Django through pip
  - Clone this repo and navigate to `server/`
 
-Now let's create  our database:
+Now creating  our database, run the following commands:
 
- - Run `python3 manage.py makemigrations`
- - Run `python3 manage.py migrate`
+ - `python3 manage.py makemigrations` 
+ - `python3 manage.py migrate`
 
-Creating a admin login for the dashboard
+Creating a admin login for the dashboard:
 
- - Run `python3 manage.py createsuperuser` and fill the asked fields
+ - `python3 manage.py createsuperuser` and fill the asked fields
  
- Now test the server:
- - Run `python3 manage.py runserver`
+ Now let's test the server:
+ - `python3 manage.py runserver`
 
 **Don't run Django's test server in production**. I recommend using Apache with mod_wsig.
 
@@ -47,7 +49,7 @@ Verifies user password
 
 Authorizes users with "Visitor" level. Only for logging purposes.
 
--     `/api/request-front-door-unlock`
+- `/api/request-front-door-unlock`
 
 Used by the Asterisk "smart doorbell". Described in the [main readme](https://github.com/joaohenriquef/rfid-access-control/blob/master/README.md).
 
