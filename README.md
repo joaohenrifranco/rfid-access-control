@@ -6,7 +6,7 @@ Django based server that provides a RESTful API for authentication and logging. 
 
 Code and more detailed info inside `server/`
 ## Client
-Developed and tested for Arduino Mega.
+Developed and tested for Arduino Mega using [PlatformIO](https://platformio.org/).
 
 Works primarily with RFID readers, one for outside and one for inside, checking if the read UID is registered in server database and has sufficient privileges for unlocking the desired room.
 
