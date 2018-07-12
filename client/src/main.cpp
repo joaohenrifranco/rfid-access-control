@@ -18,7 +18,7 @@
 /*
  *  Macros
  */
-#define WHO_AM_I              					"corredor"
+#define WHO_AM_I              					"CORREDOR"
 #define MEASURE_NUMBERS       					10
 #define MAX_VISITOR_NUM       					20
 #define SERIAL_SPEED          					9600
@@ -883,6 +883,10 @@ void loop()
 				{
 					WriteReaderLED(OK_COLOR);
 					UnlockDoor();
+				}
+				else
+				{
+					ErrorExit();
 				}
 			}
 		}
