@@ -29,6 +29,8 @@ A single client consists on two "blocks" of equipment. One block inside the room
 ## Algorithm
 The Arduino code is pretty simple and works as the diagram below:
 * Setup:
+
 ![](diagrams/client_setup_diagram.png)
 * Loop:
+
 ![](diagrams/client_loop_diagram.png)
