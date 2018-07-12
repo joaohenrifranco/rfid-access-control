@@ -33,7 +33,8 @@ These can be checked and modified at    `/accesscontrol/models.py`.
 
 - **Rooms**: have an id and a level required to get in.
 -  **Users**: have multiple identifications fields, a access level, a numeric password and one or multiple RFID tag associated.
-- **RFID Tags**: contain a unique uid and a expiration date.
+- **RFID Tags**: contain a unique uid and a expiration date
+- **Events**: logs with each API request.
 
 ## The API
 They are pretty self-explanatory and their complete behaviour can be understood by a quick look at `/accesscontrol/views.py`. However, for a quick overview:
