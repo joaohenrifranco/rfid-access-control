@@ -20,17 +20,23 @@ For a single Arduino client you will need:
 * 1x 4x3 matrix keypad (optional);
 * 1x Custom shield*
 
-*For further information on this, check the main README on the root folder of this repository.
+*For further information on this, check the [Custom shield](#custom-shield) section on this file.
 
 ## Implementation
 A single client consists on two "blocks" of equipment. One block inside the room and, the other, outside, as shown below:
-![](diagrams/hardware_diagram.png)
+
+![](images/hardware_diagram.png)
 
 ## Algorithm
 The Arduino code is pretty simple and works as the diagram below:
 * Setup:
 
-![](diagrams/client_setup_diagram.png)
+![](images/client_setup_diagram.png)
 * Loop:
 
-![](diagrams/client_loop_diagram.png)
+![](images/client_loop_diagram.png)
+
+## Custom shield
+In order to ease implementation, a custom PCB was designed with [KiCad](http://kicad-pcb.org/), in the shape of an Arduino Mega Shield. The electrical schematic is the following and all the files related to the PCB design may be found inside `custom_shield/`:
+
+![](images/custom_shield_schematic.png)
