@@ -10,7 +10,7 @@ Works with [Django 2.0+](https://docs.djangoproject.com/en/2.0/).
  - Get Django through pip
  - Clone this repo and navigate to `server/`
 
-Now creating  our database, run the following commands:
+Firstly, let's create our database. Run the following commands:
 
  - `python3 manage.py makemigrations` 
  - `python3 manage.py migrate`
@@ -29,7 +29,7 @@ Please check [Django documentation](https://docs.djangoproject.com/en/2.0/) for 
 
 
 ## Database overview
-These can be checked and modified at    `/accesscontrol/views.py`
+These can be checked and modified at    `/accesscontrol/models.py`.
 
 - **Rooms**: have an id and a level required to get in.
 -  **Users**: have multiple identifications fields, a access level, a numeric password and one or multiple RFID tag associated.
