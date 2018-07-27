@@ -18,7 +18,7 @@
 /*
  *  Macros
  */
-#define WHO_AM_I              					"CORREDOR"
+#define WHO_AM_I              					"ENSAIOS_REP"
 #define MEASURE_NUMBERS       					10
 #define MAX_VISITOR_NUM       					20
 #define SERIAL_SPEED          					9600
@@ -115,6 +115,10 @@ char readers_id [2] = {'o', 'i'};
 // ;
 // #else
 byte mac[] = MAC_ADDRESS;
+EthernetClient ethClient;
+IPAddress serverIP(SERVER_IP);
+HttpClient httpClient = HttpClient(ethClient, serverIP, REQUEST_PORT);
+
 
 /*
  *  Declaring and initializing the keypad (4x3)
@@ -491,14 +495,8 @@ byte SendPostRequest(String postData, String requestFrom)
 	digitalWrite(SS_PIN_ETHERNET, LOW);
 	digitalWrite(SS_PIN_OUTSIDE, HIGH);
 	digitalWrite(SS_PIN_INSIDE, HIGH);
-
-	EthernetClient ethClient;
-	IPAddress serverIP(SERVER_IP);
-	HttpClient httpClient = HttpClient(ethClient, "192.168.88.41", REQUEST_PORT);
-	
 	String response = "";
 	byte output = 255;
-	IPAddress myIP(Ethernet.localIP());
 	String contentType = "application/json";
 	Serial.println("Sending post...");
 	httpClient.post(requestFrom, contentType, postData);
@@ -698,6 +696,11 @@ void ErrorExit (void)
  */
 void setup() 
 {
+
+	// Short delay in order to fix reset issues
+	delay(1000);
+
+
 	// Starts serial communication for debugging purposes
 	
 	Serial.begin(SERIAL_SPEED);
