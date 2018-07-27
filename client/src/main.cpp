@@ -23,7 +23,7 @@
 #define MAX_VISITOR_NUM       					20
 #define SERIAL_SPEED          					9600
 #define MAC_ADDRESS       						{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
-#define SERVER_IP         						{192, 168, 88, 41}
+#define SERVER_IP         						"192.168.88.41"
 #define REQUEST_UNLOCK    						"/api/request-unlock"
 #define AUTHENTICATE      						"/api/authenticate"
 #define AUTHORIZE_VISITOR 						"/api/authorize-visitor"
@@ -115,10 +115,6 @@ char readers_id [2] = {'o', 'i'};
 // ;
 // #else
 byte mac[] = MAC_ADDRESS;
-EthernetClient ethClient;
-IPAddress serverIP(SERVER_IP);
-HttpClient httpClient = HttpClient(ethClient, serverIP, REQUEST_PORT);
-
 
 /*
  *  Declaring and initializing the keypad (4x3)
@@ -337,16 +333,18 @@ String GetPassword ()
 		}
 		if (c == QUIT_TYPING)
 		{
+			BlinkBuzzer(1, 50);
 			return "";
 		}
 		if (c)
 		{
-			BlinkRGB(1, 75, BLACK, DO_SOMETHING_COLOR, 'o');
 			BlinkBuzzer(1, 50);
+			BlinkRGB(1, 75, BLACK, DO_SOMETHING_COLOR, 'o');
 			aux.concat(c);
 		}
 		c = keyPad.getKey();
 	}
+	BlinkBuzzer(1, 50);
 	return aux;
 }
 
@@ -492,26 +490,59 @@ String GenerateVisitorPostData (String uid, String visitorsUids [], String roomI
  */
 byte SendPostRequest(String postData, String requestFrom)
 {
+	long thisTime = millis();
+
 	digitalWrite(SS_PIN_ETHERNET, LOW);
 	digitalWrite(SS_PIN_OUTSIDE, HIGH);
 	digitalWrite(SS_PIN_INSIDE, HIGH);
+
+	//Serial.print("Tempo de setar pinos: ");
+	//Serial.println(millis() - thisTime);
+	thisTime = millis();
+
+	EthernetClient ethClient;
+	HttpClient httpClient = HttpClient(ethClient, SERVER_IP, REQUEST_PORT);
+
+	//Serial.print("Tempo de inicialização cliente HTTP: ");
+	//Serial.println(millis() - thisTime);
+	thisTime = millis();
+
 	String response = "";
 	byte output = 255;
 	String contentType = "application/json";
-	Serial.println("Sending post...");
+	//Serial.println("Sending post...");
+
+	//Serial.print("Tempo até enviar o POST: ");
+	//Serial.println(millis() - thisTime);
+	thisTime = millis();
+	
 	httpClient.post(requestFrom, contentType, postData);
-	Serial.println("POST done!");
+
+	//Serial.print("Tempo para enviar o POST: ");
+	//Serial.println(millis() - thisTime);
+	thisTime = millis();
+
 	response = httpClient.responseBody();
-	Serial.print("Response: ");
-	Serial.println(response);
+	//Serial.print("Response: ");
+	//Serial.println(response);
+
+	//Serial.print("Tempo para pegar o response: ");
+	//Serial.println(millis() - thisTime);
+	thisTime = millis();
+
 	const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
 	DynamicJsonBuffer jsonBuffer(capacity);
 	JsonObject& root = jsonBuffer.parseObject(response);
 	if (!root.success()) {
-		Serial.println(F("Parsing failed!"));
+		//Serial.println(F("Parsing failed!"));
 		return 255;
 	}
 	output = root["status"];
+
+	//Serial.print("Tempo para parsear o response: ");
+	//Serial.println(millis() - thisTime);
+	thisTime = millis();
+
 	httpClient.endRequest();
 	return output;
 }
@@ -535,7 +566,7 @@ byte ParseResponse (String response)
 	JsonObject& root = jsonBuffer.parseObject(response);
 	if (!root.success())
 	{
-		Serial.println("Parsing response failed!");
+		//Serial.println("Parsing response failed!");
 		return 255;
 	}
 	else
@@ -557,8 +588,8 @@ byte ParseResponse (String response)
 	// 		status_str.concat(teste[i]);
 	// 	}
 	// }
-	// //Serial.print("DEBUG: ");
-	// //Serial.println(status_str);
+	// ////Serial.print("DEBUG: ");
+	// ////Serial.println(status_str);
 	// if (status_str != "")
 	// 	status = status_str.toInt();
 	// return status;
@@ -628,12 +659,12 @@ void ResetStatus (void)
  */
 void CheckVisitorTimeout (void)
 {
-	Serial.print ("Time: ");
-	Serial.println(millis() - visitorInitTime);
+	//Serial.print ("Time: ");
+	//Serial.println(millis() - visitorInitTime);
 	if ((millis() - visitorInitTime) >= TIMEOUT_VISITOR)
 	{
 		ResetStatus();
-		Serial.println("Checou timeout");
+		//Serial.println("Checou timeout");
 	}
 }
 
@@ -647,7 +678,7 @@ void CheckDoorTimeout (void)
 	bool previous_lock [2] = {readers_locked[0], readers_locked[1]};
 	while (opened)
 	{
-		Serial.println ("=== PORTA ABERTA! ===");
+		//Serial.println ("=== PORTA ABERTA! ===");
 		readers_locked[0] = true;
 		readers_locked[1] = true;
 		WriteReaderLED(ERROR_COLOR);
@@ -659,7 +690,7 @@ void CheckDoorTimeout (void)
 	}
 	digitalWrite(DOOR_PIN, HIGH);
 	WriteReaderLED(STANDBY_COLOR);
-	Serial.println("- Porta fechada...");
+	//Serial.println("- Porta fechada...");
 	Buzz(false);
 	readers_locked [0] = previous_lock [0];
 	readers_locked [1] = previous_lock [1];
@@ -698,20 +729,22 @@ void setup()
 {
 
 	// Short delay in order to fix reset issues
-	delay(1000);
+	delay(5000);
 
-
+	// Turn LEDs into AQUA to print that the setup has been going on
+	WriteReaderLED(AQUA);
+	
 	// Starts serial communication for debugging purposes
 	
-	Serial.begin(SERIAL_SPEED);
+	//Serial.begin(SERIAL_SPEED);
 	
-	Serial.println("=== Beginning Setup...");
-	Serial.println("-- Setting SPI SS pins...");
+	//Serial.println("=== Beginning Setup...");
+	//Serial.println("-- Setting SPI SS pins...");
 	
 	pinMode(SS_PIN_INSIDE, OUTPUT);
 	pinMode(SS_PIN_OUTSIDE, OUTPUT);
 	
-	Serial.println("-- Setting LEDs pins as output...");
+	//Serial.println("-- Setting LEDs pins as output...");
 
 	pinMode(LED_IN_R, OUTPUT);
 	pinMode(LED_IN_G, OUTPUT);
@@ -722,7 +755,7 @@ void setup()
 	pinMode(DOOR_PIN, OUTPUT);
 	digitalWrite(DOOR_PIN, HIGH);
 
-	Serial.println("-- Initializing RFID modules...");
+	//Serial.println("-- Initializing RFID modules...");
 	
 	SPI.begin();
 	for (byte i = 0; i < NUM_READERS; i++)
@@ -731,36 +764,42 @@ void setup()
 		digitalWrite(SS_PIN_OUTSIDE, HIGH);
 		digitalWrite(ssPins[i], LOW);
 		readers[i].PCD_Init(ssPins[i], RST_PIN);
-		Serial.print("-- Reader ");
-		Serial.print(i + 1);
+		//Serial.print("-- Reader ");
+		//Serial.print(i + 1);
 		
-		Serial.print(" initialized!\n- Version: ");
-		readers[i].PCD_DumpVersionToSerial();
+		//Serial.print(" initialized!\n- Version: ");
+		//readers[i].PCD_DumpVersionToSerial();
 	}	
 
-	Serial.println("-- Initializing Ethernet module...");
+	//Serial.println("-- Initializing Ethernet module...");
 
 	for (byte i = 0; i < NUM_READERS; i++) {
 		digitalWrite(ssPins[i], HIGH);
 	}
-  
+	digitalWrite(SS_PIN_ETHERNET, LOW);
+
+	// Delay for Ethernet
+	delay (1000);
+
 	if (Ethernet.begin(mac) == 0) {
-		Serial.println("Failed to configure Ethernet using DHCP");
-		while(true); // Freezes here if ethernet setup fails
+		WriteReaderLED(ERROR_COLOR);
+		//Serial.println("Failed to configure Ethernet using DHCP");
+		delay(1000);
+		setup();
   	}
 
-	Serial.print("- My MAC: ");
-	Serial.print(mac[0], HEX); Serial.print(":"); Serial.print(mac[1], HEX); Serial.print(":");
-	Serial.print(mac[2], HEX); Serial.print(":"); Serial.print(mac[3], HEX); Serial.print(":");
-	Serial.print(mac[4], HEX); Serial.print(":"); Serial.print(mac[5], HEX); Serial.println();
-	Serial.print("- My IP: ");
-	Serial.println(Ethernet.localIP());
+	//Serial.print("- My MAC: ");
+	//Serial.print(mac[0], HEX); //Serial.print(":"); //Serial.print(mac[1], HEX); //Serial.print(":");
+	//Serial.print(mac[2], HEX); //Serial.print(":"); //Serial.print(mac[3], HEX); //Serial.print(":");
+	//Serial.print(mac[4], HEX); //Serial.print(":"); //Serial.print(mac[5], HEX); //Serial.println();
+	//Serial.print("- My IP: ");
+	//Serial.println(Ethernet.localIP());
 
 	// Initializes the sensor
-	Serial.println("-- Setting sensor pin as input...");
+	//Serial.println("-- Setting sensor pin as input...");
 	pinMode(PIN_SENSOR, INPUT);
 	// Initializes the buzzer
-	Serial.println("-- Setting buzzer pin as output...");
+	//Serial.println("-- Setting buzzer pin as output...");
 	pinMode(PIN_BUZZER, OUTPUT);
 	WriteReaderLED(STANDBY_COLOR);
 }
@@ -792,30 +831,30 @@ void loop()
 	}
 
 	// Starts to read
-	Serial.println("=== Starting to read...");
+	//Serial.println("=== Starting to read...");
 	tag = ReadRFIDTags(&entering_or_leaving);
 	while (tag == "")
 	{
-		Serial.println("-- Reading...");
+		//Serial.println("-- Reading...");
 		if (visitor_counter > 0)
 			CheckVisitorTimeout();
 		delay (50);
 		tag = ReadRFIDTags(&entering_or_leaving);
 	}
-	Serial.print("UID Tag: ");
-	Serial.println(tag);
+	//Serial.print("UID Tag: ");
+	//Serial.println(tag);
 	// Found an UID. Turns one side to WAITING_MODE and the other to BLOCKED_MODE
 	if (entering_or_leaving == 0) readers_locked[1] = true;
 	else readers_locked[0] = true;
 	WriteReaderLED(WAITING_COLOR);
 	// Generates POST data
-	Serial.println("-- Generating POST data...");
+	//Serial.println("-- Generating POST data...");
 	postData = GenerateUnlockPostData (tag, WHO_AM_I, entering_or_leaving);
-	Serial.println(postData);
+	//Serial.println(postData);
 	// Sends request to REQUEST_UNLOCK and gets response
 	status = SendPostRequest(postData, REQUEST_UNLOCK);
-	Serial.print("-- Status: ");
-	Serial.println(status);
+	//Serial.print("-- Status: ");
+	//Serial.println(status);
 	// If already authorized, unlocks door
 	if (status == AUTHORIZED)
 	{
@@ -829,11 +868,11 @@ void loop()
 		employeeTag = tag;
 		// Blinks DO_SOMETHING_COLOR
 		BlinkRGB(2, 250, BLACK, DO_SOMETHING_COLOR, readerPosition);
-		Serial.println("-- Waiting for password...");
+		//Serial.println("-- Waiting for password...");
 		// Gets password
 		pw = GetPassword();
-		Serial.print("-- Password: ");
-		Serial.println(pw);
+		//Serial.print("-- Password: ");
+		//Serial.println(pw);
 		if (pw == "")
 		{
 			ErrorExit();
@@ -842,28 +881,28 @@ void loop()
 		// Blinks WAITING_COLOR once password is read
 		BlinkRGB(2, 250, BLACK, WAITING_COLOR, readerPosition);
 		// Hashes password
-		Serial.println("-- Hashing password...");
+		//Serial.println("-- Hashing password...");
 		hashed = HashedPassword(pw);
-		Serial.print("-- Hashed password (SHA-256): ");
-		Serial.println(hashed);
+		//Serial.print("-- Hashed password (SHA-256): ");
+		//Serial.println(hashed);
 		// Generates POST data for AUTHENTICATE API
-		Serial.println("-- Generating POST data...");
+		//Serial.println("-- Generating POST data...");
 		postData = GenerateAuthenticatePostData(tag, hashed, WHO_AM_I);
-		Serial.println(postData);
+		//Serial.println(postData);
 		// Sends POST data to AUTHENTICATE API
 		status = SendPostRequest(postData, AUTHENTICATE);
-		Serial.print("-- Status: ");
-		Serial.println(status);
+		//Serial.print("-- Status: ");
+		//Serial.println(status);
 		// If authorized
 		if (status == AUTHORIZED)
 		{
-			Serial.print("Numero do contador: ");
-			Serial.println(visitor_counter);
-			Serial.print("Array: ");
+			//Serial.print("Numero do contador: ");
+			//Serial.println(visitor_counter);
+			//Serial.print("Array: ");
 			for (byte j = 0; j < visitor_counter; j++)
 			{
-				Serial.println(j);
-				Serial.println(tagsArray[j]);
+				//Serial.println(j);
+				//Serial.println(tagsArray[j]);
 			}
 			// Checks if there's any visitor on tagsArray
 			if (visitor_counter == 0)
@@ -875,13 +914,13 @@ void loop()
 			else
 			{
 				//	Generating POST data for visitors
-				Serial.println("-- Generating Visitor POST data...");
+				//Serial.println("-- Generating Visitor POST data...");
 				postData = GenerateVisitorPostData (employeeTag, tagsArray, WHO_AM_I);
-				Serial.println(postData);
+				//Serial.println(postData);
 				//	Sending POST to visitors API
 				status = SendPostRequest(postData, AUTHORIZE_VISITOR);
-				Serial.print("-- Status: ");
-				Serial.println(status);
+				//Serial.print("-- Status: ");
+				//Serial.println(status);
 				if (status == VISITOR_AUTHORIZED)
 				{
 					WriteReaderLED(OK_COLOR);
@@ -903,9 +942,9 @@ void loop()
 		if (visitor_counter < MAX_VISITOR_NUM)
 		{
 			visitorInitTime = millis();
-			Serial.println("Registrando visitante...");
+			//Serial.println("Registrando visitante...");
 			tagsArray[visitor_counter] = tag;
-			Serial.println(tagsArray[visitor_counter]);
+			//Serial.println(tagsArray[visitor_counter]);
 			visitor_counter++;
 		}
 	}
