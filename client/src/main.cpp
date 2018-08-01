@@ -472,20 +472,52 @@ String GenerateAuthenticatePostData(String uid, String password, String roomID)
  */
 String GenerateVisitorPostData(String uid, String visitorsUids[], String roomID)
 {
-	StaticJsonBuffer<200> jsonBuffer;
-	JsonObject &root = jsonBuffer.createObject();
-	root["uid"] = uid;
-	root["roomID"] = roomID;
+	StaticJsonBuffer <200> postDataBuffer;
+	
+	JsonObject &jsonRoot = postDataBuffer.createObject();
+	jsonRoot["uid"] = uid;
+	jsonRoot["roomID"] = roomID;
 
-	JsonArray &VisUID = root.createNestedArray("visitorsUids");
+	JsonArray &VisUID = jsonRoot.createNestedArray("visitorsUids");
 	for (byte i = 0; i < visitor_counter; i++)
 	{
 		VisUID.add(visitorsUids[i]);
 	}
 
 	String output;
-	root.printTo(output);
+	jsonRoot.printTo(output);
 	return output;
+}
+
+/*
+ *  byte ParseResponse (String response);
+ *
+ *  Description:
+ *  - Parse the server's response to return numeric status
+ *
+ *  Inputs/Outputs:
+ *  [INPUT] String response: Server's response
+ *
+ *  Returns:
+ *  [byte] Numeric error code from server
+ */
+byte ParseResponse(String response)
+{
+	DynamicJsonBuffer jsonBuffer (JSON_OBJECT_SIZE(1) + 20);
+	
+	byte status = 255;
+	JsonObject &root = jsonBuffer.parseObject(response);
+	if (!root.success())
+	{
+		Serial.println("Parsing response failed!");
+		status = 255;
+	}
+	else
+	{
+		Serial.println("Parsing successful");
+		status = root["status"];
+	}
+	return status;
 }
 
 /*
@@ -543,15 +575,7 @@ byte SendPostRequest(String postData, String requestFrom)
 	// Serial.println(millis() - thisTime);
 	// thisTime = millis();
 
-	const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
-	DynamicJsonBuffer jsonBuffer(capacity);
-	JsonObject &root = jsonBuffer.parseObject(response);
-	if (!root.success())
-	{
-		Serial.println(F("Parsing failed!"));
-		return 255;
-	}
-	output = root["status"];
+	output = ParseResponse(response);
 
 	// Serial.print("Tempo para parsear o response: ");
 	// Serial.println(millis() - thisTime);
@@ -559,54 +583,6 @@ byte SendPostRequest(String postData, String requestFrom)
 
 	httpClient.endRequest();
 	return output;
-}
-
-/*
- *  byte ParseResponse (String response);
- *
- *  Description:
- *  - Parse the server's response to return numeric status
- *
- *  Inputs/Outputs:
- *  [INPUT] String response: Server's response
- *
- *  Returns:
- *  [byte] Numeric error code from server
- */
-byte ParseResponse(String response)
-{
-	byte status = 255;
-	StaticJsonBuffer<500> jsonBuffer;
-	JsonObject &root = jsonBuffer.parseObject(response);
-	if (!root.success())
-	{
-		Serial.println("Parsing response failed!");
-		return 255;
-	}
-	else
-	{
-		status = root["status"];
-		return status;
-	}
-	// byte status = 255;
-	// String status_str = "";
-	// char cResponse [200];
-	// response.toCharArray(cResponse, 200);
-	// char *teste = strstr(cResponse, "status");
-	// for (byte i = 0; i < strlen(teste); i++)
-	// {
-	// 	if (teste[i] == '}')
-	// 		break;
-	// 	if ((teste[i] >= '0') && (teste[i] <= '9'))
-	// 	{
-	// 		status_str.concat(teste[i]);
-	// 	}
-	// }
-	// //Serial.print("DEBUG: ");
-	// //Serial.println(status_str);
-	// if (status_str != "")
-	// 	status = status_str.toInt();
-	// return status;
 }
 
 /*
