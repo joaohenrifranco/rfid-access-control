@@ -18,94 +18,106 @@
 /*
  *  Macros
  */
-#define WHO_AM_I              					"ENSAIOS_REP"
-#define MEASURE_NUMBERS       					10
-#define MAX_VISITOR_NUM       					20
-#define SERIAL_SPEED          					9600
-#define MAC_ADDRESS       						{0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02} 	// Change MAC for individual modules
-#define SERVER_IP         						"192.168.88.41"
-#define REQUEST_UNLOCK    						"/api/request-unlock"
-#define AUTHENTICATE      						"/api/authenticate"
-#define AUTHORIZE_VISITOR 						"/api/authorize-visitor"
-#define REQUEST_PORT      						80                 						//Standard HTTP port
-#define KEYPAD_LINES      						4
-#define KEYPAD_COLUMNS    						3
-#define KEYS              						{{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}, {'*', '0', '#'}}
-#define END_OF_PASSWORD   						'#'
-#define QUIT_TYPING       						'*'
-#define NUM_READERS       						2
-byte BLACK [] =									{0, 0, 0};								//Turn LED off
-byte BLUE [] =									{0, 0, HIGH};
-byte GREEN [] =									{0, HIGH, 0};
-byte AQUA [] =									{0, HIGH, HIGH};						//Light blue
-byte RED [] =									{HIGH, 0, 0};
-byte FUCHSIA [] =								{HIGH, 0, HIGH};						//Kinda purple
-byte YELLOW [] =								{HIGH, HIGH, 0};
-byte WHITE [] =									{HIGH, HIGH, HIGH};
-#define WAITING_COLOR							YELLOW
-#define OK_COLOR								GREEN
-#define ERROR_COLOR								RED
-#define STANDBY_COLOR							WHITE
-#define DO_SOMETHING_COLOR						BLUE
-#define DOOR_UNLOCK_TIME						2000
-#define TIMEOUT_VISITOR							20000
-#define TIMEOUT_DOOR							60000
-#define TIMEOUT_PASSWORD						15000
+#define WHO_AM_I "ENSAIOS_REP"
+#define MEASURE_NUMBERS 10
+#define MAX_VISITOR_NUM 20
+#define SERIAL_SPEED 9600
+#define MAC_ADDRESS                        \
+	{                                      \
+		0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02 \
+	} // Change MAC for individual modules
+#define SERVER_IP "192.168.88.41"
+#define REQUEST_UNLOCK "/api/request-unlock"
+#define AUTHENTICATE "/api/authenticate"
+#define AUTHORIZE_VISITOR "/api/authorize-visitor"
+#define REQUEST_PORT 80 //Standard HTTP port
+#define KEYPAD_LINES 4
+#define KEYPAD_COLUMNS 3
+#define KEYS                                                                 \
+	{                                                                        \
+		{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}, { '*', '0', '#' } \
+	}
+#define END_OF_PASSWORD '#'
+#define QUIT_TYPING '*'
+#define NUM_READERS 2
+byte BLACK[] = {0, 0, 0}; //Turn LED off
+byte BLUE[] = {0, 0, HIGH};
+byte GREEN[] = {0, HIGH, 0};
+byte AQUA[] = {0, HIGH, HIGH}; //Light blue
+byte RED[] = {HIGH, 0, 0};
+byte FUCHSIA[] = {HIGH, 0, HIGH}; //Kinda purple
+byte YELLOW[] = {HIGH, HIGH, 0};
+byte WHITE[] = {HIGH, HIGH, HIGH};
+#define WAITING_COLOR YELLOW
+#define OK_COLOR GREEN
+#define ERROR_COLOR RED
+#define STANDBY_COLOR WHITE
+#define DO_SOMETHING_COLOR BLUE
+#define DOOR_UNLOCK_TIME 2000
+#define TIMEOUT_VISITOR 20000
+#define TIMEOUT_DOOR 60000
+#define TIMEOUT_PASSWORD 5000
 
 /*
  *	Server Error Codes
  */
-#define UNKNOWN_ERROR							-1
-#define AUTHORIZED								0
-#define RFID_NOT_FOUND							1
-#define INSUFFICIENT_PRIVILEGES					2
-#define WRONG_PASSWORD							3
-#define PASSWORD_REQUIRED						4
-#define VISITOR_RFID_FOUND						5
-#define VISITOR_AUTHORIZED						6
-#define VISITOR_RFID_NOT_FOUND					7
-#define ROOM_NOT_FOUND							8
-#define OPEN_DOOR_TIMEOUT						9
+#define UNKNOWN_ERROR -1
+#define AUTHORIZED 0
+#define RFID_NOT_FOUND 1
+#define INSUFFICIENT_PRIVILEGES 2
+#define WRONG_PASSWORD 3
+#define PASSWORD_REQUIRED 4
+#define VISITOR_RFID_FOUND 5
+#define VISITOR_AUTHORIZED 6
+#define VISITOR_RFID_NOT_FOUND 7
+#define ROOM_NOT_FOUND 8
+#define OPEN_DOOR_TIMEOUT 9
 
 /*
  *  Pins
  */
-#define LED_IN_R								36
-#define LED_IN_G								38
-#define LED_IN_B								40
-#define LED_OUT_R								42
-#define LED_OUT_G								44
-#define LED_OUT_B								46
-#define PIN_SENSOR								48
-#define PIN_BUZZER								26
-#define DOOR_PIN								28
-#define RST_PIN									30
-#define KEYPAD_LIN_PINS							{37, 39, 41, 43}
-#define KEYPAD_COL_PINS							{45, 47, 49}
+#define LED_IN_R 36
+#define LED_IN_G 38
+#define LED_IN_B 40
+#define LED_OUT_R 42
+#define LED_OUT_G 44
+#define LED_OUT_B 46
+#define PIN_SENSOR 48
+#define PIN_BUZZER 26
+#define DOOR_PIN 28
+#define RST_PIN 30
+#define KEYPAD_LIN_PINS \
+	{                   \
+		37, 39, 41, 43  \
+	}
+#define KEYPAD_COL_PINS \
+	{                   \
+		45, 47, 49      \
+	}
 
 // Macros for reference only
-#define MISO_PIN								50
-#define MOSI_PIN								51
-#define SCK_PIN									52
+#define MISO_PIN 50
+#define MOSI_PIN 51
+#define SCK_PIN 52
 
 //	SS pins
-const byte SS_PIN_ETHERNET = 					10;
-const byte SS_PIN_OUTSIDE	=					22;
-const byte SS_PIN_INSIDE	= 					24;
+const byte SS_PIN_ETHERNET = 10;
+const byte SS_PIN_OUTSIDE = 22;
+const byte SS_PIN_INSIDE = 24;
 
 //	Redefining Ethernet SS pin
 #ifdef ETHERNET_SHIELD_SPI_CS
-	#undef ETHERNET_SHIELD_SPI_CS
+#undef ETHERNET_SHIELD_SPI_CS
 #endif
 #define ETHERNET_SHIELD_SPI_CS SS_PIN_ETHERNET
 
 /*
  *  Declaring the RFID modules
  */
-const byte ssPins [] = {SS_PIN_OUTSIDE, SS_PIN_INSIDE};
-MFRC522 readers [NUM_READERS];
-bool readers_locked [2] = {false, false};
-char readers_id [2] = {'o', 'i'};
+const byte ssPins[] = {SS_PIN_OUTSIDE, SS_PIN_INSIDE};
+MFRC522 readers[NUM_READERS];
+bool readers_locked[2] = {false, false};
+char readers_id[2] = {'o', 'i'};
 
 /*
  *  Declaring IP, MAC and the ethernet client itself
@@ -128,7 +140,7 @@ Keypad keyPad = Keypad(makeKeymap(keys), keyPadLinPins, keyPadColPins, KEYPAD_LI
  *	Global vars for visitors
  */
 byte visitor_counter = 0;
-String tagsArray [MAX_VISITOR_NUM];
+String tagsArray[MAX_VISITOR_NUM];
 unsigned long visitorInitTime = 0;
 
 /*
@@ -143,7 +155,7 @@ unsigned long visitorInitTime = 0;
  *  Returns:
  *  -
  */
-void WriteRGB (byte color[], char inside_outside)
+void WriteRGB(byte color[], char inside_outside)
 {
 	if (inside_outside == 'i')
 	{
@@ -162,7 +174,7 @@ void WriteRGB (byte color[], char inside_outside)
 /*
  *	Write function header
  */
-void WriteReaderLED (byte color[])
+void WriteReaderLED(byte color[])
 {
 	for (byte i = 0; i < 2; i++)
 	{
@@ -193,9 +205,9 @@ void WriteReaderLED (byte color[])
  *  Returns:
  *  -
  */
-void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_color [], char readerPosition)
+void BlinkRGB(byte n_times, byte delay_time, byte blink_color[], byte end_color[], char readerPosition)
 {
-	for (byte i = 0; i < n_times; i ++)
+	for (byte i = 0; i < n_times; i++)
 	{
 		WriteReaderLED(blink_color);
 		delay(delay_time);
@@ -217,14 +229,14 @@ void BlinkRGB (byte n_times, byte delay_time, byte blink_color [], byte end_colo
  *  Returns:
  *  [String] The UID tag itself
  */
-String UID_toStr (byte *buffer, byte bufferSize)
+String UID_toStr(byte *buffer, byte bufferSize)
 {
 	String aux = "";
-  	for (byte i = 0; i < bufferSize; i++)
+	for (byte i = 0; i < bufferSize; i++)
 	{
 		aux.concat(String(buffer[i] < 0x10 ? "0" : ""));
 		aux.concat(String(buffer[i], HEX));
-  	}
+	}
 	return aux;
 }
 
@@ -240,7 +252,7 @@ String UID_toStr (byte *buffer, byte bufferSize)
  *  Returns:
  *  -
  */
-void Buzz (bool activate)
+void Buzz(bool activate)
 {
 	digitalWrite(PIN_BUZZER, activate);
 }
@@ -248,9 +260,9 @@ void Buzz (bool activate)
 /*
  *	Build description (TODO)
  */
-void BlinkBuzzer (byte n_times, byte delay_time)
+void BlinkBuzzer(byte n_times, byte delay_time)
 {
-	for (byte i = 0; i < n_times; i ++)
+	for (byte i = 0; i < n_times; i++)
 	{
 		Buzz(true);
 		delay(delay_time);
@@ -271,12 +283,12 @@ void BlinkBuzzer (byte n_times, byte delay_time)
  *  Returns:
  *  [String] The UID tag itself in uppercase or empty string
  */
-String ReadRFIDTags (char *entering_or_leaving)
+String ReadRFIDTags(char *entering_or_leaving)
 {
 	digitalWrite(SS_PIN_ETHERNET, HIGH);
 	*entering_or_leaving = 255;
-  	String aux = "";
-  	for (byte i = 0; i < NUM_READERS; i++)
+	String aux = "";
+	for (byte i = 0; i < NUM_READERS; i++)
 	{
 		if (readers_locked[i] == false)
 		{
@@ -293,14 +305,14 @@ String ReadRFIDTags (char *entering_or_leaving)
 			if (aux != "")
 				return aux;
 		}
-  	}
+	}
 	return aux;
 }
 
 /*
  *	Build description (TODO)
  */
-void BuzzTimer (byte delayTime)
+void BuzzTimer(byte delayTime)
 {
 	Buzz(true);
 	delay(delayTime);
@@ -320,7 +332,7 @@ void BuzzTimer (byte delayTime)
  *  Returns:
  *  [String] The password typed until the END_OF_PASSWORD character
  */
-String GetPassword ()
+String GetPassword()
 {
 	String aux = "";
 	char c = keyPad.getKey();
@@ -338,6 +350,7 @@ String GetPassword ()
 		}
 		if (c)
 		{
+			initial_timer = millis();
 			BlinkBuzzer(1, 50);
 			BlinkRGB(1, 75, BLACK, DO_SOMETHING_COLOR, 'o');
 			aux.concat(c);
@@ -360,13 +373,13 @@ String GetPassword ()
  *  Returns:
  *  [String] A 64-character long string with containing the hashed password
  */
-String readableHash(uint8_t* hash)
+String readableHash(uint8_t *hash)
 {
 	String out = "";
 	for (byte i = 0; i < 32; i++)
 	{
-		out.concat("0123456789abcdef"[hash [i] >> 4]);
-		out.concat("0123456789abcdef"[hash [i] & 0xf]);
+		out.concat("0123456789abcdef"[hash[i] >> 4]);
+		out.concat("0123456789abcdef"[hash[i] & 0xf]);
 	}
 	return out;
 }
@@ -383,7 +396,7 @@ String readableHash(uint8_t* hash)
  *  Returns:
  *  [String] The hash function result
  */
-String HashedPassword (String password)
+String HashedPassword(String password)
 {
 	Sha256 hash_function;
 	uint8_t *hash;
@@ -407,7 +420,7 @@ String HashedPassword (String password)
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateUnlockPostData (String uid, String roomID, byte readerPosition)
+String GenerateUnlockPostData(String uid, String roomID, byte readerPosition)
 {
 	String aux = "{\n\t\"uid\":\"";
 	aux.concat(uid);
@@ -432,7 +445,7 @@ String GenerateUnlockPostData (String uid, String roomID, byte readerPosition)
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateAuthenticatePostData (String uid, String password, String roomID)
+String GenerateAuthenticatePostData(String uid, String password, String roomID)
 {
 	String aux = "{\n\t\"uid\":\"";
 	aux.concat(uid);
@@ -457,14 +470,14 @@ String GenerateAuthenticatePostData (String uid, String password, String roomID)
  *  Returns:
  *  [String] A JSON format text contatining the whole input data
  */
-String GenerateVisitorPostData (String uid, String visitorsUids [], String roomID)
+String GenerateVisitorPostData(String uid, String visitorsUids[], String roomID)
 {
 	StaticJsonBuffer<200> jsonBuffer;
-	JsonObject& root = jsonBuffer.createObject();
+	JsonObject &root = jsonBuffer.createObject();
 	root["uid"] = uid;
 	root["roomID"] = roomID;
 
-	JsonArray& VisUID = root.createNestedArray("visitorsUids");
+	JsonArray &VisUID = root.createNestedArray("visitorsUids");
 	for (byte i = 0; i < visitor_counter; i++)
 	{
 		VisUID.add(visitorsUids[i]);
@@ -490,58 +503,59 @@ String GenerateVisitorPostData (String uid, String visitorsUids [], String roomI
  */
 byte SendPostRequest(String postData, String requestFrom)
 {
-	long thisTime = millis();
+	// long thisTime = millis();
 
 	digitalWrite(SS_PIN_ETHERNET, LOW);
 	digitalWrite(SS_PIN_OUTSIDE, HIGH);
 	digitalWrite(SS_PIN_INSIDE, HIGH);
 
-	//Serial.print("Tempo de setar pinos: ");
-	//Serial.println(millis() - thisTime);
-	thisTime = millis();
+	// Serial.print("Tempo de setar pinos: ");
+	// Serial.println(millis() - thisTime);
+	// thisTime = millis();
 
 	EthernetClient ethClient;
 	HttpClient httpClient = HttpClient(ethClient, SERVER_IP, REQUEST_PORT);
 
-	//Serial.print("Tempo de inicialização cliente HTTP: ");
-	//Serial.println(millis() - thisTime);
-	thisTime = millis();
+	// Serial.print("Tempo de inicialização cliente HTTP: ");
+	// Serial.println(millis() - thisTime);
+	// thisTime = millis();
 
 	String response = "";
 	byte output = 255;
 	String contentType = "application/json";
-	//Serial.println("Sending post...");
+	Serial.println("Sending post...");
 
-	//Serial.print("Tempo até enviar o POST: ");
-	//Serial.println(millis() - thisTime);
-	thisTime = millis();
-	
+	// Serial.print("Tempo até enviar o POST: ");
+	// Serial.println(millis() - thisTime);
+	// thisTime = millis();
+
 	httpClient.post(requestFrom, contentType, postData);
 
-	//Serial.print("Tempo para enviar o POST: ");
-	//Serial.println(millis() - thisTime);
-	thisTime = millis();
+	// Serial.print("Tempo para enviar o POST: ");
+	// Serial.println(millis() - thisTime);
+	// thisTime = millis();
 
 	response = httpClient.responseBody();
-	//Serial.print("Response: ");
-	//Serial.println(response);
+	Serial.print("Response: ");
+	Serial.println(response);
 
-	//Serial.print("Tempo para pegar o response: ");
-	//Serial.println(millis() - thisTime);
-	thisTime = millis();
+	// Serial.print("Tempo para pegar o response: ");
+	// Serial.println(millis() - thisTime);
+	// thisTime = millis();
 
 	const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
 	DynamicJsonBuffer jsonBuffer(capacity);
-	JsonObject& root = jsonBuffer.parseObject(response);
-	if (!root.success()) {
-		//Serial.println(F("Parsing failed!"));
+	JsonObject &root = jsonBuffer.parseObject(response);
+	if (!root.success())
+	{
+		Serial.println(F("Parsing failed!"));
 		return 255;
 	}
 	output = root["status"];
 
-	//Serial.print("Tempo para parsear o response: ");
-	//Serial.println(millis() - thisTime);
-	thisTime = millis();
+	// Serial.print("Tempo para parsear o response: ");
+	// Serial.println(millis() - thisTime);
+	// thisTime = millis();
 
 	httpClient.endRequest();
 	return output;
@@ -559,14 +573,14 @@ byte SendPostRequest(String postData, String requestFrom)
  *  Returns:
  *  [byte] Numeric error code from server
  */
-byte ParseResponse (String response)
+byte ParseResponse(String response)
 {
 	byte status = 255;
 	StaticJsonBuffer<500> jsonBuffer;
-	JsonObject& root = jsonBuffer.parseObject(response);
+	JsonObject &root = jsonBuffer.parseObject(response);
 	if (!root.success())
 	{
-		//Serial.println("Parsing response failed!");
+		Serial.println("Parsing response failed!");
 		return 255;
 	}
 	else
@@ -588,8 +602,8 @@ byte ParseResponse (String response)
 	// 		status_str.concat(teste[i]);
 	// 	}
 	// }
-	// ////Serial.print("DEBUG: ");
-	// ////Serial.println(status_str);
+	// //Serial.print("DEBUG: ");
+	// //Serial.println(status_str);
 	// if (status_str != "")
 	// 	status = status_str.toInt();
 	// return status;
@@ -607,7 +621,7 @@ byte ParseResponse (String response)
  *  Returns:
  *  [bool] The array's mode
  */
-bool BooleanMode (bool *array)
+bool BooleanMode(bool *array)
 {
 	byte countTrue = 0;
 	byte countFalse = 0;
@@ -633,9 +647,9 @@ bool BooleanMode (bool *array)
  *  Returns:
  *  [bool] Is the door opened?
  */
-bool DoorOpened ()
+bool DoorOpened()
 {
-	bool measures [MEASURE_NUMBERS];
+	bool measures[MEASURE_NUMBERS];
 	for (byte i = 0; i < MEASURE_NUMBERS; i++)
 	{
 		measures[i] = digitalRead(PIN_SENSOR);
@@ -643,10 +657,10 @@ bool DoorOpened ()
 	return BooleanMode(measures);
 }
 
- /*
+/*
   *	Write header
   */
-void ResetStatus (void)
+void ResetStatus(void)
 {
 	readers_locked[0] = false;
 	readers_locked[1] = false;
@@ -657,28 +671,28 @@ void ResetStatus (void)
 /*
  *	Write header
  */
-void CheckVisitorTimeout (void)
+void CheckVisitorTimeout(void)
 {
-	//Serial.print ("Time: ");
-	//Serial.println(millis() - visitorInitTime);
+	Serial.print("Time: ");
+	Serial.println(millis() - visitorInitTime);
 	if ((millis() - visitorInitTime) >= TIMEOUT_VISITOR)
 	{
 		ResetStatus();
-		//Serial.println("Checou timeout");
+		Serial.println("Checou timeout");
 	}
 }
 
 /*
  *	Write header
  */
-void CheckDoorTimeout (void)
+void CheckDoorTimeout(void)
 {
 	bool opened = DoorOpened();
 	unsigned long timer = millis();
-	bool previous_lock [2] = {readers_locked[0], readers_locked[1]};
+	bool previous_lock[2] = {readers_locked[0], readers_locked[1]};
 	while (opened)
 	{
-		//Serial.println ("=== PORTA ABERTA! ===");
+		Serial.println("=== PORTA ABERTA! ===");
 		readers_locked[0] = true;
 		readers_locked[1] = true;
 		WriteReaderLED(ERROR_COLOR);
@@ -690,10 +704,10 @@ void CheckDoorTimeout (void)
 	}
 	digitalWrite(DOOR_PIN, HIGH);
 	WriteReaderLED(STANDBY_COLOR);
-	//Serial.println("- Porta fechada...");
+	Serial.println("- Porta fechada...");
 	Buzz(false);
-	readers_locked [0] = previous_lock [0];
-	readers_locked [1] = previous_lock [1];
+	readers_locked[0] = previous_lock[0];
+	readers_locked[1] = previous_lock[1];
 }
 
 /*
@@ -702,7 +716,7 @@ void CheckDoorTimeout (void)
  *  Description:
  *  - Procedure to unlock the door
  */
-void UnlockDoor (void)
+void UnlockDoor(void)
 {
 	digitalWrite(DOOR_PIN, LOW);
 	delay(DOOR_UNLOCK_TIME);
@@ -713,7 +727,7 @@ void UnlockDoor (void)
 /*
  *	Write header
  */
-void ErrorExit (void)
+void ErrorExit(void)
 {
 	WriteReaderLED(ERROR_COLOR);
 	BlinkBuzzer(3, 50);
@@ -725,26 +739,23 @@ void ErrorExit (void)
 /*
  *  Setup
  */
-void setup() 
+void setup()
 {
 
-	// Short delay in order to fix reset issues
-	delay(5000);
+	// Turn LEDs into FUCHSIA to print that the setup has been going on
+	WriteReaderLED(FUCHSIA);
 
-	// Turn LEDs into AQUA to print that the setup has been going on
-	WriteReaderLED(AQUA);
-	
 	// Starts serial communication for debugging purposes
-	
-	//Serial.begin(SERIAL_SPEED);
-	
-	//Serial.println("=== Beginning Setup...");
-	//Serial.println("-- Setting SPI SS pins...");
-	
+
+	Serial.begin(SERIAL_SPEED);
+
+	Serial.println("=== Beginning Setup...");
+	Serial.println("-- Setting SPI SS pins...");
+
 	pinMode(SS_PIN_INSIDE, OUTPUT);
 	pinMode(SS_PIN_OUTSIDE, OUTPUT);
-	
-	//Serial.println("-- Setting LEDs pins as output...");
+
+	Serial.println("-- Setting LEDs pins as output...");
 
 	pinMode(LED_IN_R, OUTPUT);
 	pinMode(LED_IN_G, OUTPUT);
@@ -755,8 +766,8 @@ void setup()
 	pinMode(DOOR_PIN, OUTPUT);
 	digitalWrite(DOOR_PIN, HIGH);
 
-	//Serial.println("-- Initializing RFID modules...");
-	
+	Serial.println("-- Initializing RFID modules...");
+
 	SPI.begin();
 	for (byte i = 0; i < NUM_READERS; i++)
 	{
@@ -764,42 +775,50 @@ void setup()
 		digitalWrite(SS_PIN_OUTSIDE, HIGH);
 		digitalWrite(ssPins[i], LOW);
 		readers[i].PCD_Init(ssPins[i], RST_PIN);
-		//Serial.print("-- Reader ");
-		//Serial.print(i + 1);
-		
-		//Serial.print(" initialized!\n- Version: ");
-		//readers[i].PCD_DumpVersionToSerial();
-	}	
+		Serial.print("-- Reader ");
+		Serial.print(i + 1);
 
-	//Serial.println("-- Initializing Ethernet module...");
+		Serial.print(" initialized!\n- Version: ");
+		readers[i].PCD_DumpVersionToSerial();
+	}
 
-	for (byte i = 0; i < NUM_READERS; i++) {
+	Serial.println("-- Initializing Ethernet module...");
+
+	for (byte i = 0; i < NUM_READERS; i++)
+	{
 		digitalWrite(ssPins[i], HIGH);
 	}
 	digitalWrite(SS_PIN_ETHERNET, LOW);
 
-	// Delay for Ethernet
-	delay (1000);
-
-	if (Ethernet.begin(mac) == 0) {
+	if (Ethernet.begin(mac) == 0)
+	{
 		WriteReaderLED(ERROR_COLOR);
-		//Serial.println("Failed to configure Ethernet using DHCP");
+		Serial.println("Failed to configure Ethernet using DHCP");
 		delay(1000);
 		setup();
-  	}
+	}
 
-	//Serial.print("- My MAC: ");
-	//Serial.print(mac[0], HEX); //Serial.print(":"); //Serial.print(mac[1], HEX); //Serial.print(":");
-	//Serial.print(mac[2], HEX); //Serial.print(":"); //Serial.print(mac[3], HEX); //Serial.print(":");
-	//Serial.print(mac[4], HEX); //Serial.print(":"); //Serial.print(mac[5], HEX); //Serial.println();
-	//Serial.print("- My IP: ");
-	//Serial.println(Ethernet.localIP());
+	Serial.print("- My MAC: ");
+	Serial.print(mac[0], HEX);
+	Serial.print(":");
+	Serial.print(mac[1], HEX);
+	Serial.print(":");
+	Serial.print(mac[2], HEX);
+	Serial.print(":");
+	Serial.print(mac[3], HEX);
+	Serial.print(":");
+	Serial.print(mac[4], HEX);
+	Serial.print(":");
+	Serial.print(mac[5], HEX);
+	Serial.println();
+	Serial.print("- My IP: ");
+	Serial.println(Ethernet.localIP());
 
 	// Initializes the sensor
-	//Serial.println("-- Setting sensor pin as input...");
+	Serial.println("-- Setting sensor pin as input...");
 	pinMode(PIN_SENSOR, INPUT);
 	// Initializes the buzzer
-	//Serial.println("-- Setting buzzer pin as output...");
+	Serial.println("-- Setting buzzer pin as output...");
 	pinMode(PIN_BUZZER, OUTPUT);
 	WriteReaderLED(STANDBY_COLOR);
 }
@@ -807,7 +826,7 @@ void setup()
 /*
  *  Loop
  */
-void loop() 
+void loop()
 {
 	/*  Full code for Arduino Client (still in development) */
 	String pw = "";
@@ -831,30 +850,32 @@ void loop()
 	}
 
 	// Starts to read
-	//Serial.println("=== Starting to read...");
+	Serial.print("\n=== Starting to read...");
 	tag = ReadRFIDTags(&entering_or_leaving);
 	while (tag == "")
 	{
-		//Serial.println("-- Reading...");
+		Serial.print(".");
 		if (visitor_counter > 0)
 			CheckVisitorTimeout();
-		delay (50);
+		delay(50);
 		tag = ReadRFIDTags(&entering_or_leaving);
 	}
-	//Serial.print("UID Tag: ");
-	//Serial.println(tag);
+	Serial.print("\nUID Tag: ");
+	Serial.println(tag);
 	// Found an UID. Turns one side to WAITING_MODE and the other to BLOCKED_MODE
-	if (entering_or_leaving == 0) readers_locked[1] = true;
-	else readers_locked[0] = true;
+	if (entering_or_leaving == 0)
+		readers_locked[1] = true;
+	else
+		readers_locked[0] = true;
 	WriteReaderLED(WAITING_COLOR);
 	// Generates POST data
-	//Serial.println("-- Generating POST data...");
-	postData = GenerateUnlockPostData (tag, WHO_AM_I, entering_or_leaving);
-	//Serial.println(postData);
+	Serial.println("-- Generating POST data...");
+	postData = GenerateUnlockPostData(tag, WHO_AM_I, entering_or_leaving);
+	Serial.println(postData);
 	// Sends request to REQUEST_UNLOCK and gets response
 	status = SendPostRequest(postData, REQUEST_UNLOCK);
-	//Serial.print("-- Status: ");
-	//Serial.println(status);
+	Serial.print("-- Status: ");
+	Serial.println(status);
 	// If already authorized, unlocks door
 	if (status == AUTHORIZED)
 	{
@@ -867,12 +888,12 @@ void loop()
 		// Copies read tag to employee tag
 		employeeTag = tag;
 		// Blinks DO_SOMETHING_COLOR
-		BlinkRGB(2, 250, BLACK, DO_SOMETHING_COLOR, readerPosition);
-		//Serial.println("-- Waiting for password...");
+		BlinkRGB(1, 50, BLACK, DO_SOMETHING_COLOR, readerPosition);
+		Serial.println("-- Waiting for password...");
 		// Gets password
 		pw = GetPassword();
-		//Serial.print("-- Password: ");
-		//Serial.println(pw);
+		Serial.print("-- Password: ");
+		Serial.println(pw);
 		if (pw == "")
 		{
 			ErrorExit();
@@ -881,28 +902,28 @@ void loop()
 		// Blinks WAITING_COLOR once password is read
 		BlinkRGB(2, 250, BLACK, WAITING_COLOR, readerPosition);
 		// Hashes password
-		//Serial.println("-- Hashing password...");
+		Serial.println("-- Hashing password...");
 		hashed = HashedPassword(pw);
-		//Serial.print("-- Hashed password (SHA-256): ");
-		//Serial.println(hashed);
+		Serial.print("-- Hashed password (SHA-256): ");
+		Serial.println(hashed);
 		// Generates POST data for AUTHENTICATE API
-		//Serial.println("-- Generating POST data...");
+		Serial.println("-- Generating POST data...");
 		postData = GenerateAuthenticatePostData(tag, hashed, WHO_AM_I);
-		//Serial.println(postData);
+		Serial.println(postData);
 		// Sends POST data to AUTHENTICATE API
 		status = SendPostRequest(postData, AUTHENTICATE);
-		//Serial.print("-- Status: ");
-		//Serial.println(status);
+		Serial.print("-- Status: ");
+		Serial.println(status);
 		// If authorized
 		if (status == AUTHORIZED)
 		{
-			//Serial.print("Numero do contador: ");
-			//Serial.println(visitor_counter);
-			//Serial.print("Array: ");
+			Serial.print("Numero do contador: ");
+			Serial.println(visitor_counter);
+			Serial.print("Array: ");
 			for (byte j = 0; j < visitor_counter; j++)
 			{
-				//Serial.println(j);
-				//Serial.println(tagsArray[j]);
+				Serial.println(j);
+				Serial.println(tagsArray[j]);
 			}
 			// Checks if there's any visitor on tagsArray
 			if (visitor_counter == 0)
@@ -914,13 +935,13 @@ void loop()
 			else
 			{
 				//	Generating POST data for visitors
-				//Serial.println("-- Generating Visitor POST data...");
-				postData = GenerateVisitorPostData (employeeTag, tagsArray, WHO_AM_I);
-				//Serial.println(postData);
+				Serial.println("-- Generating Visitor POST data...");
+				postData = GenerateVisitorPostData(employeeTag, tagsArray, WHO_AM_I);
+				Serial.println(postData);
 				//	Sending POST to visitors API
 				status = SendPostRequest(postData, AUTHORIZE_VISITOR);
-				//Serial.print("-- Status: ");
-				//Serial.println(status);
+				Serial.print("-- Status: ");
+				Serial.println(status);
 				if (status == VISITOR_AUTHORIZED)
 				{
 					WriteReaderLED(OK_COLOR);
@@ -942,9 +963,9 @@ void loop()
 		if (visitor_counter < MAX_VISITOR_NUM)
 		{
 			visitorInitTime = millis();
-			//Serial.println("Registrando visitante...");
+			Serial.println("Registrando visitante...");
 			tagsArray[visitor_counter] = tag;
-			//Serial.println(tagsArray[visitor_counter]);
+			Serial.println(tagsArray[visitor_counter]);
 			visitor_counter++;
 		}
 	}
