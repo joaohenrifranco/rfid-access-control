@@ -472,8 +472,8 @@ String GenerateAuthenticatePostData(String uid, String password, String roomID)
  */
 String GenerateVisitorPostData(String uid, String visitorsUids[], String roomID)
 {
-	StaticJsonBuffer <200> postDataBuffer;
-	
+	StaticJsonBuffer<200> postDataBuffer;
+
 	JsonObject &jsonRoot = postDataBuffer.createObject();
 	jsonRoot["uid"] = uid;
 	jsonRoot["roomID"] = roomID;
@@ -503,8 +503,8 @@ String GenerateVisitorPostData(String uid, String visitorsUids[], String roomID)
  */
 byte ParseResponse(String response)
 {
-	DynamicJsonBuffer jsonBuffer (JSON_OBJECT_SIZE(1) + 20);
-	
+	DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(1) + 20);
+
 	byte status = 255;
 	JsonObject &root = jsonBuffer.parseObject(response);
 	if (!root.success())
@@ -641,7 +641,6 @@ void ResetStatus(void)
 	readers_locked[0] = false;
 	readers_locked[1] = false;
 	visitor_counter = 0;
-	loop();
 }
 
 /*
@@ -827,7 +826,6 @@ void loop()
 
 	// Starts to read
 	Serial.print("\n=== Starting to read...");
-	tag = ReadRFIDTags(&entering_or_leaving);
 	while (tag == "")
 	{
 		Serial.print(".");
@@ -939,7 +937,7 @@ void loop()
 		if (visitor_counter < MAX_VISITOR_NUM)
 		{
 			visitorInitTime = millis();
-			Serial.println("Registrando visitante...");
+			Serial.println("Registering visitor...");
 			tagsArray[visitor_counter] = tag;
 			Serial.println(tagsArray[visitor_counter]);
 			visitor_counter++;
