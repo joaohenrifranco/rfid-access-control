@@ -1,3 +1,4 @@
+_Note: this repo is not being actively maintained_
 # RFID Access Control
 Access control system developed to log each entrance and exit of internal rooms at a lab located at Federal University of Rio de Janeiro (UFRJ).
 
